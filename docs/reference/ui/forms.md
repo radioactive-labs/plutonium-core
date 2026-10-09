@@ -164,6 +164,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `phone_tag` / `int_tel_input_tag` | intl-tel-input phone field |
 | `currency_tag` | Money input (number field + optional unit prefix) |
 | `uppy_tag` / `file_tag` | Uppy file upload |
+| `binary_tag` | Plain file input whose bytes go into a `binary` column |
 | `secure_association_tag` | Association with policy-checked options (inline `+` add, typeahead) |
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
 | `key_value_store_tag` | Key/value pairs editor |
@@ -254,6 +255,14 @@ field :pin, as: :secret                # alias of :password
 
 > [!WARNING]
 > The heuristic is name-based and best-effort. A secret column with an unconventional name (e.g. `recovery_phrase`, `pin`) still renders its value into the page unless you set `as: :password`. Audit secret-bearing columns explicitly.
+
+### Binary columns {#binary-fields}
+
+A `binary` column renders `binary_tag`: a plain file input. The uploaded file's bytes are written to the column, and the show page and table print its size (`Binary data (12 KB)`), never the bytes.
+
+- Saving without choosing a file keeps the stored bytes. There is no control to clear the column.
+- Browsers can't refill a file input, so after a failed validation the user has to choose the file again.
+- The whole file is read into memory and stored in the row. Use Active Storage (`has_one_attached` + `:uppy`) for anything that isn't small.
 
 ### Wrapped vs unwrapped
 

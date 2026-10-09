@@ -21,6 +21,9 @@ module Plutonium
             case inferred_field_type
             when :attachment
               :attachment
+            when :binary
+              # phlexi-display falls back to :string, printing the raw bytes.
+              :binary
             when :boolean
               # phlexi-display falls back to :string, rendering "true"/"false".
               :boolean

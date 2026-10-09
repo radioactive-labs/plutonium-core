@@ -548,8 +548,8 @@ The field-level help keys (`:label`, `:description`, `:hint`, `:placeholder`) ar
 | Text | `:string`, `:text`, `:email`, `:url`, `:phone`, `:password` (alias `:secret`) |
 | Boolean | `:toggle` / `:switch` (switch, **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
-| Files | `:file`, `:uppy`, `:attachment` |
 | Selection | `:select`, `:slim_select`, `:collection_radio_buttons`, `:collection_checkboxes` |
+| Files | `:file`, `:uppy`, `:attachment` (Active Storage), `:binary` (bytes in a `binary` column) |
 | Associations | `:association`, `:secure_association`, `:belongs_to`, `:has_many`, `:has_one` |
 | Special | `:hidden`, `:color`, `:phone` |
 
@@ -565,6 +565,7 @@ These render automatically: declare an `as:` only to override or pass options:
 |--------|-----------|-------|
 | `boolean` | Yes/No pill (`:boolean`) | green "Yes" / neutral "No". Override labels: `true_label:`, `false_label:` |
 | `enum` | colored status badge (`:badge`) | known statuses (active, pending, failed…) auto-colored; unknown values get a stable decorative color |
+| `binary` | size (`:binary`) | `Binary data (12 KB)`, never the bytes |
 | `has_cents` decimal | currency (`:currency`) | delimited, 2 decimals; symbol from `unit:` (display or `has_cents`), else `config.default_currency_unit` / i18n. `unit: false` drops it |
 
 ```ruby

@@ -78,6 +78,7 @@ Some types render with richer components automatically; you only declare an `as:
 | `:badge` | colored status pill | `enum` columns | `colors:` (per-value override) |
 | `:currency` | delimited, 2-decimal money | `has_cents` decimal accessors | `unit:`, `options:` |
 | `:color` | swatch + value | - | - |
+| `:binary` | `Binary data (12 KB)`, never the bytes | `binary` columns | - |
 | `:number` | delimited, at the column's scale (`1,999.50`) | `float` / `decimal` columns | - |
 
 ```ruby

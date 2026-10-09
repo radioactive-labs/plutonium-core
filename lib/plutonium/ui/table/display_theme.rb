@@ -19,6 +19,7 @@ module Plutonium
             # Boolean / badge pills: the component applies the variant class.
             boolean: "",
             badge: "",
+            binary: "text-sm text-[var(--pu-text-muted)]",
             phlexi_render: :string,
             json: "whitespace-pre font-mono text-xs bg-[var(--pu-surface-alt)] border border-[var(--pu-border-muted)] rounded-[var(--pu-radius-sm)] p-2 overflow-x-auto",
             attachment_value_wrapper: "flex flex-wrap gap-1"

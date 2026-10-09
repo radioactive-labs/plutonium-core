@@ -87,6 +87,10 @@ module Plutonium
             alias_method :"#{name}_tag", :uppy_tag
           end
 
+          def binary_tag(**, &)
+            create_component(Components::Binary, :file, **, &)
+          end
+
           def key_value_store_tag(**, &)
             create_component(Components::KeyValueStore, :key_value_store, **, &)
           end

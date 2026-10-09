@@ -72,6 +72,7 @@ Plutonium detects, from the model:
 | `boolean` | `:boolean` |
 | `date`, `datetime`, `time` | `:date` / `:datetime` / `:time` |
 | `json`, `jsonb` | `:json` |
+| `binary` | `:binary` |
 
 Validations on the model inform the UI too: `validates :title, presence: true` → required field; `validates :role, inclusion: { in: [...] }` → select choices.
 
@@ -104,8 +105,8 @@ end
 | Text | `:string`, `:text`, `:email`, `:url`, `:phone`, `:password` (alias `:secret`) |
 | Boolean | `:toggle` / `:switch` (switch: **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
-| Files | `:file`, `:uppy`, `:attachment` |
 | Selection | `:select`, `:slim_select`, `:collection_radio_buttons`, `:collection_checkboxes` |
+| Files | `:file`, `:uppy`, `:attachment` (Active Storage), `:binary` (bytes in a `binary` column) |
 | Associations | `:association`, `:secure_association`, `:belongs_to`, `:has_many`, `:has_one` |
 | Special | `:hidden`, `:color`, `:phone` |
 
@@ -121,6 +122,7 @@ These render automatically; declare an `as:` only to override or pass options:
 |---|---|---|
 | `boolean` | Yes/No pill (`:boolean`) | green "Yes" / neutral "No"; override with `true_label:` / `false_label:` |
 | `enum` | status badge (`:badge`) | known statuses auto-colored; unknown values get a stable decorative color; override per-value with `colors:` |
+| `binary` | size (`:binary`) | `Binary data (12 KB)`, never the bytes |
 | `has_cents` decimal | currency (`:currency`) | delimited, 2 decimals; symbol from `unit:` on `has_cents` (model-wide) or per-display, else `config.default_currency_unit` / the i18n default (see below) |
 
 ```ruby

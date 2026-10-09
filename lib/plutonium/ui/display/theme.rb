@@ -58,6 +58,7 @@ module Plutonium
             json: "text-sm text-[var(--pu-text)] whitespace-pre font-mono bg-[var(--pu-surface-alt)] border border-[var(--pu-border-muted)] rounded-[var(--pu-radius-md)] p-4 overflow-x-auto",
             prefixed_icon: "w-6 h-6 mr-2 text-[var(--pu-text-muted)]",
             markdown: "format dark:format-invert format-primary max-w-none",
+            binary: "text-sm text-[var(--pu-text-muted)]",
 
             # Attachments
             attachment_value_wrapper: "grid grid-cols-[repeat(auto-fill,minmax(0,200px))] gap-4",
