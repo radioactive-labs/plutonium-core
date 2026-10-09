@@ -61,6 +61,17 @@ module Plutonium
             select_tag(**attributes, required: false, class!: "", &)
           end
 
+          # Chip input for array values. See {Components::List}.
+          def list_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
+            create_component(Components::List, :select, required: false, class!: "", **attributes, &)
+          end
+
+          # Star picker. See {Components::Rating}.
+          def rating_tag(**, &)
+            create_component(Components::Rating, :rating, **, &)
+          end
+
           def flatpickr_tag(**, &)
             create_component(Components::Flatpickr, :flatpickr, **, &)
           end

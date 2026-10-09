@@ -9,10 +9,15 @@ import { t } from "../i18n.js";
 //                     When present, SlimSelect's built-in client-side
 //                     filter is replaced by a debounced fetch through
 //                     this URL.
+//   addable         — typed text can be added as a new option (chip
+//                     inputs, see Form::Components::List).
+//   max-selected    — caps how many options a multi-select keeps.
 export default class extends Controller {
   static values = {
     typeaheadUrl: String,
-    typeaheadDebounceMs: { type: Number, default: 200 }
+    typeaheadDebounceMs: { type: Number, default: 200 },
+    addable: Boolean,
+    maxSelected: Number
   }
 
   connect() {
@@ -39,9 +44,17 @@ export default class extends Controller {
     // define placeholderText, searchText, searchPlaceholder and searchingText.
     const strings = t("plutonium.js.libraries.slim_select");
     if (strings && typeof strings === "object") {
-      const { placeholderText, searchText, searchPlaceholder, searchingText } = strings;
-      Object.assign(settings, { placeholderText, searchText, searchPlaceholder, searchingText });
+      const { placeholderText, searchText, searchPlaceholder, searchingText, addableText } = strings;
+      Object.assign(settings, { placeholderText, searchText, searchPlaceholder, searchingText, addableText });
       Object.keys(settings).forEach((k) => settings[k] === undefined && delete settings[k]);
+    }
+
+    if (this.hasMaxSelectedValue) settings.maxSelected = this.maxSelectedValue;
+
+    if (this.addableValue) {
+      // A plain "Select Value" / "Search" hides that new values can be typed in.
+      settings.placeholderText = t("plutonium.js.slim_select.add_placeholder");
+      settings.searchPlaceholder = t("plutonium.js.slim_select.add_search_placeholder");
     }
 
     this.modal = this.element.closest('[data-controller="remote-modal"]');
@@ -74,6 +87,11 @@ export default class extends Controller {
       // body owns the scroll regions), so let it overflow while open.
       events.afterOpen = () => { this.modal.style.overflow = "visible"; };
       events.afterClose = () => { this.modal.style.overflow = ""; };
+    }
+
+    if (this.addableValue) {
+      // Returning false rejects blank input instead of adding an empty chip.
+      events.addable = (value) => value.trim() || false;
     }
 
     if (this.hasTypeaheadUrlValue && this.typeaheadUrlValue) {

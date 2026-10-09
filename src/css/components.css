@@ -1247,3 +1247,36 @@ html.pu-rail-pinned .icon-rail-pin-expand {
     opacity: 0.6;
   }
 }
+
+/* Star rating input (Form::Components::Rating). Radios run max..1 in a
+   row-reversed box, so `~ label` reaches the stars below the checked or
+   hovered one. */
+.pu-rating {
+  @apply inline-flex flex-row-reverse justify-end gap-0.5 border-0 p-0 m-0;
+}
+.pu-rating label {
+  @apply cursor-pointer text-[var(--pu-border)] transition-colors;
+}
+.pu-rating label svg {
+  @apply w-6 h-6;
+}
+.pu-rating input:checked ~ label,
+.pu-rating label:hover,
+.pu-rating label:hover ~ label {
+  @apply text-warning-500;
+}
+.pu-rating input:checked ~ label svg,
+.pu-rating label:hover svg,
+.pu-rating label:hover ~ label svg {
+  fill: currentColor;
+}
+/* "Clear" comes last in the DOM; order: -1 puts it after the stars
+   (row-reverse lays out from the right). `input ~` matches the star-fill
+   rules' specificity, and coming later lets this win. */
+.pu-rating input ~ label.pu-rating-clear {
+  @apply order-[-1] ml-2 self-center text-sm text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:underline;
+}
+.pu-rating input:focus-visible + label {
+  @apply rounded-sm outline-2 outline-offset-2 outline-primary-500;
+}
+

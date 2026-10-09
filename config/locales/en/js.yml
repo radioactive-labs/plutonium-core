@@ -13,6 +13,9 @@ en:
         copied: "Copied!"
       slim_select:
         search_failed: "Search failed"
+        # Chip inputs that accept new values (`as: :list`, tags)
+        add_placeholder: "Type to add…"
+        add_search_placeholder: "Search or add new"
       dirty_form_guard:
         unsaved_changes: "You have unsaved changes that will be lost. Continue?"
         discard_changes: "Discard your changes?"
@@ -35,6 +38,7 @@ en:
           searchText: "No Results"
           searchPlaceholder: "Search"
           searchingText: "Searching..."
+          addableText: 'Press "Enter" to add {value}'
         # flatpickr: `locale: "de"` (the host must load the matching l10n bundle)
         # uppy: `strings: {...}` (Uppy locale strings, merged over the English defaults)
         # intl_tel_input: `{...}` (intl-tel-input `i18n` option)

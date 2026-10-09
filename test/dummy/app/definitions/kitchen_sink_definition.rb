@@ -130,6 +130,16 @@ class KitchenSinkDefinition < ::ResourceDefinition
   input :phone, as: :phone, initial_country: "gh"              # intl-tel-input; default country + strictMode
   field :config, as: :json                                     # json editor
   field :prefs, as: :key_value                                 # key-value store
+  field :nicknames, as: :list                                  # chip input + chips
+  input :nicknames, suggestions: %w[Basin Tub]
+
+  # Value displays (opt-in via as:)
+  field :rating, as: :rating                                   # star picker + stars
+  display :completion, as: :progress                           # 0..100 bar
+  display :cycle_seconds, as: :duration                        # 8100 -> 2h 15m
+  display :manual_bytes, as: :file_size                        # bytes -> 12 KB
+  display :last_cleaned_at, as: :relative_time                 # live "3 minutes ago"
+  display :tracking_id, as: :code                              # monospace + copy
   field :user                                                  # association (slim-select) + link display
 
   # Display-only renderers
