@@ -48,6 +48,10 @@ class SlimSelectHelperTest < ApplicationSystemTestCase
 
   def swallowed_count = page.evaluate_script("window.__ssSwallowed")
 
+  # The user select is a typeahead, and User has no `search` block, so the
+  # server matches the query against `email`. Searching by the label finds
+  # nothing.
+
   test "a lost click leaves the widget unselected no matter how long you wait" do
     swallow_option_clicks!(1)
 
@@ -68,7 +72,7 @@ class SlimSelectHelperTest < ApplicationSystemTestCase
   test "select_association retries the interaction until the choice lands" do
     swallow_option_clicks!(1)
 
-    select_association @user.to_label, from: "comment[user]"
+    select_association @user.to_label, from: "comment[user]", search: @user.email
 
     assert_equal 1, swallowed_count
     assert_selector ".ss-main", text: @user.to_label, wait: 0
@@ -82,7 +86,7 @@ class SlimSelectHelperTest < ApplicationSystemTestCase
     # Four attempts, so a wider budget than the default — three losses in a row
     # is far past what CI does, and the point is that nothing about the retry
     # loop caps out, not that the default covers it.
-    select_association @user.to_label, from: "comment[user]", wait: 40
+    select_association @user.to_label, from: "comment[user]", search: @user.email, wait: 40
 
     assert_equal 3, swallowed_count
     assert_selector ".ss-main", text: @user.to_label, wait: 0
@@ -92,7 +96,7 @@ class SlimSelectHelperTest < ApplicationSystemTestCase
     swallow_option_clicks!(9_999)
 
     error = assert_raises(Capybara::ExpectationNotMet) do
-      select_association @user.to_label, from: "comment[user]", wait: 2
+      select_association @user.to_label, from: "comment[user]", search: @user.email, wait: 2
     end
 
     # A bare "expected to find" says nothing about WHY. The two facts that
@@ -103,12 +107,12 @@ class SlimSelectHelperTest < ApplicationSystemTestCase
   end
 
   test "it is a no-op when the option is already selected" do
-    select_association @user.to_label, from: "comment[user]"
+    select_association @user.to_label, from: "comment[user]", search: @user.email
     swallow_option_clicks!(9_999)
 
     # Must not re-open and re-click: with every click swallowed, anything that
     # tried would raise rather than return.
-    select_association @user.to_label, from: "comment[user]", wait: 2
+    select_association @user.to_label, from: "comment[user]", search: @user.email, wait: 2
 
     assert_equal 0, swallowed_count
     assert_selector ".ss-main", text: @user.to_label, wait: 0
