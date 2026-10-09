@@ -67,6 +67,12 @@ module Plutonium
             create_component(Components::List, :select, required: false, class!: "", **attributes, &)
           end
 
+          # Chip input for a no_fly_list `has_tags` context. See {Components::Tags}.
+          def tags_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
+            create_component(Components::Tags, :select, required: false, class!: "", **attributes, &)
+          end
+
           # Star picker. See {Components::Rating}.
           def rating_tag(**, &)
             create_component(Components::Rating, :rating, **, &)

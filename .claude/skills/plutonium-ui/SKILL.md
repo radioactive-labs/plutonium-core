@@ -327,6 +327,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `key_value_store_tag` | Key/value pairs editor |
 | `currency_tag` | Money input (number field + unit prefix) |
 | `list_tag` | Chip input for array values (`suggestions:`, `limit:`, `addable: false`) |
+| `tags_tag` | Chip input for a no_fly_list `has_tags` context; default for those contexts |
 | `rating_tag` | Star picker (`max:`, default 5); a Clear option unless required |
 | `binary_tag` | Plain file input whose bytes go into a `binary` column |
 | `json_tag` | JSON editor; default for `json`/`jsonb` columns |

@@ -10,7 +10,8 @@ module Plutonium
         def lookup(type)
           return type if type.is_a?(Class) && type < Filter
 
-          class_name = "Plutonium::Query::Filters::#{type.to_s.classify}"
+          # camelize, not classify: classify singularizes (`:tags` -> `Tag`).
+          class_name = "Plutonium::Query::Filters::#{type.to_s.camelize}"
           class_name.constantize
         rescue NameError
           raise ArgumentError, "Unknown filter type: #{type}. Expected #{class_name} to exist."

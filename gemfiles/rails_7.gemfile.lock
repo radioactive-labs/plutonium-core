@@ -1,7 +1,15 @@
+GIT
+  remote: https://github.com/radioactive-labs/no_fly_list.git
+  revision: e1e88d9c7d898ef269e3cabfa12da2fb327459cc
+  branch: feat/scoped-tags
+  specs:
+    no_fly_list (0.7.4)
+      activerecord (>= 7.2)
+
 PATH
   remote: ..
   specs:
-    plutonium (0.64.0)
+    plutonium (0.66.0)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
@@ -490,6 +498,7 @@ DEPENDENCIES
   importmap-rails
   minitest
   minitest-reporters
+  no_fly_list!
   plutonium!
   propshaft
   puma (>= 5.0)
@@ -521,7 +530,7 @@ CHECKSUMS
   activerecord (7.2.3.2) sha256=e62d24ba7e5f820d24ed122eb9225491b0aaa8398778783b400067c3467285c7
   activestorage (7.2.3.2) sha256=863cb4b21b83505555be2addb939fefb856ab05f6c6d24bab00d6f1a7e4edbfc
   activesupport (7.2.3.2) sha256=ddc90d11dd88086d78ace03407fe3c2a3f5c8853c3c3046313db5ed823ef3312
-  acts_as_list (1.2.6)
+  acts_as_list (1.2.6) sha256=8345380900b7bee620c07ad00991ccee59af3d8c9e8574f426e321da2865fdc8
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
   ansi (1.6.0) sha256=ac9ea0c0ea8d32fb4e271348e609963ac78882f34b73836c2a02b3622e666658
   appraisal (2.5.0) sha256=36989221be127913b0dba8d114da2001e6b2dceea7bd4951200eaba764eed3ce
@@ -580,6 +589,7 @@ CHECKSUMS
   net-protocol (0.2.2) sha256=aa73e0cba6a125369de9837b8d8ef82a61849360eba0521900e2c3713aa162a8
   net-smtp (0.5.1) sha256=ed96a0af63c524fceb4b29b0d352195c30d82dd916a42f03c62a3a70e5b70736
   nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
+  no_fly_list (0.7.4)
   nokogiri (1.19.4-aarch64-linux-gnu) sha256=1269fb644a6de405057a53dd5c762b1209b43ca7424f839454d3dbc677c31a8f
   nokogiri (1.19.4-aarch64-linux-musl) sha256=35c65b9ce72b3bb03207bdbe7067915019dc18c1b9b59139684bd6690fdd01af
   nokogiri (1.19.4-arm-linux-gnu) sha256=a301313e38bb065d68239e79734bcd6f56fb6efaacebde29e9abf2a4735340ca
@@ -601,7 +611,7 @@ CHECKSUMS
   phlexi-form (0.14.3) sha256=47d69c4a49ba22279ba541b9b110e81d62acc4602513f21bb5c3d29fa9c8d5ca
   phlexi-menu (0.4.1) sha256=f6eeb1eb9597caadeee33a53f1520b3613a6ac616cf1e395e9d734a412895fb2
   phlexi-table (0.2.0) sha256=73bee135adbe73fcdb6fdd2672444373556dd9e6bba61e7b5b20ca8b7a1f822c
-  plutonium (0.64.0)
+  plutonium (0.66.0)
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85

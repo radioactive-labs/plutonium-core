@@ -18,7 +18,7 @@ class KitchenSinkPolicy < ::ResourcePolicy
     name organization user email_address secret website favorite_color age
     balance price description bio active featured plan tier birthday meeting_at
     alarm_time phone config prefs status secret_token tracking_id
-    fingerprint nicknames
+    fingerprint nicknames labels zones
     rating completion cycle_seconds manual_bytes last_cleaned_at
   ].freeze
 

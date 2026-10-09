@@ -133,6 +133,8 @@ class KitchenSinkDefinition < ::ResourceDefinition
   field :nicknames, as: :list                                  # chip input + chips
   input :nicknames, suggestions: %w[Basin Tub]
 
+  filter :labels, with: :tags                                  # no_fly_list context
+
   # Value displays (opt-in via as:)
   field :rating, as: :rating                                   # star picker + stars
   display :completion, as: :progress                           # 0..100 bar

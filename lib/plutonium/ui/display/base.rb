@@ -64,6 +64,10 @@ module Plutonium
             create_component(Plutonium::UI::Display::Components::List, :list, **, &)
           end
 
+          def tags_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Tags, :list, **, &)
+          end
+
           def relative_time_tag(**, &)
             create_component(Plutonium::UI::Display::Components::RelativeTime, :relative_time, **, &)
           end

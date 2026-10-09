@@ -82,7 +82,7 @@ For large tables, write an explicit `search` block backed by a trigram or full-t
 
 ## Filters
 
-Six built-in filter types. Use the shorthand symbol or the full class name.
+Seven built-in filter types. Use the shorthand symbol or the full class name.
 
 `search`, `scope`, `sort_fields`, and `sort_directions` are reserved filter names; they're built-in controls in the `q[<name>]` namespace, so `filter :scope` raises `ArgumentError`.
 
@@ -94,6 +94,7 @@ Six built-in filter types. Use the shorthand symbol or the full class name.
 | Date range | `:date_range` | `from`, `to` | `from_label:`, `to_label:` |
 | Select | `:select` | `value` | `choices:`, `multiple:` |
 | Association | `:association` | `value` | `class_name:`, `multiple:` |
+| Tags | `:tags` | `value` | `match:` (`:any` default, or `:all`) |
 
 ### Text predicates
 
@@ -147,6 +148,15 @@ filter :tags,     with: :select, choices: %w[ruby rails js], multiple: true
 filter :category, with: :association
 filter :author,   with: :association, class_name: User
 filter :tags,     with: :association, class_name: Tag, multiple: true
+```
+
+### Tags
+
+For a [no_fly_list](https://github.com/radioactive-labs/no_fly_list) `has_tags` context. The options are the tags used by records the user can see (the policy scope), so a tenant never sees another tenant's tags.
+
+```ruby
+filter :labels, with: :tags               # records with any chosen tag
+filter :labels, with: :tags, match: :all  # records with every chosen tag
 ```
 
 ### Custom filter (lambda)
