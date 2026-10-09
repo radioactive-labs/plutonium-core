@@ -78,6 +78,7 @@ Some types render with richer components automatically; you only declare an `as:
 | `:badge` | colored status pill | `enum` columns | `colors:` (per-value override) |
 | `:currency` | delimited, 2-decimal money | `has_cents` decimal accessors | `unit:`, `options:` |
 | `:color` | swatch + value | - | - |
+| `:number` | delimited, at the column's scale (`1,999.50`) | `float` / `decimal` columns | - |
 
 ```ruby
 class OrderDefinition < ResourceDefinition
@@ -90,7 +91,7 @@ end
 
 **Badge colors.** Known statuses (`active`, `pending`, `failed`, …) are auto-colored by meaning. Unknown values get a stable decorative color (same value → same color). Override per-value with `colors:`; valid variants: `:neutral`, `:primary`, `:secondary`, `:success`, `:danger`, `:warning`, `:info`, `:accent`.
 
-**Currency.** No symbol is shown unless you pass `unit:`, a literal string (`"£"`) or a Symbol read off the record for per-row currencies. `has_cents` decimal accessors infer `:currency` automatically (still symbol-less until you set `unit:`).
+**Currency.** The symbol comes from a per-display `unit:` (a literal `"£"`, or a Symbol read off the record for per-row currencies), else the model's `has_cents ... unit:`, else `Plutonium.configuration.default_currency_unit` / the i18n `number.currency.format.unit` (`$` in `en`). Pass `unit: false` for no symbol. `has_cents` decimal accessors infer `:currency` automatically.
 
 ## Theming
 

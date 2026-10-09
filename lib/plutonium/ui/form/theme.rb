@@ -117,6 +117,16 @@ module Plutonium
             invalid_json: :invalid_input,
             neutral_json: :neutral_input,
 
+            # EasyMDE replaces the textarea once its JS boots; until then (or
+            # without JS) the textarea should look like every other one.
+            easymde: :textarea,
+            valid_easymde: :valid_textarea,
+            invalid_easymde: :invalid_textarea,
+            neutral_easymde: :neutral_textarea,
+
+            # Key/value editor: the component lays out its own rows and inputs.
+            key_value_store: "",
+
             # Uppy file upload
             uppy: :file,
             valid_uppy: :valid_file,
@@ -130,10 +140,10 @@ module Plutonium
             neutral_association: :neutral_select,
 
             # Polymorphic association
-            polymorpic_association: :association,
-            valid_polymorpic_association: :valid_association,
-            invalid_polymorpic_association: :invalid_association,
-            neutral_polymorpic_association: :neutral_association
+            polymorphic_association: :association,
+            valid_polymorphic_association: :valid_association,
+            invalid_polymorphic_association: :invalid_association,
+            neutral_polymorphic_association: :neutral_association
           })
         end
       end

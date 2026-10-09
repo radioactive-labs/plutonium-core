@@ -44,21 +44,6 @@ module Plutonium
             attributes[:data][:key_value_store_limit_value] = limit
           end
 
-          def render_header
-            div(class: "key-value-store-header") do
-              if attributes[:label]
-                h3(class: "text-lg font-semibold text-[var(--pu-text)]") do
-                  plain attributes[:label]
-                end
-              end
-              if attributes[:description]
-                p(class: "text-sm text-[var(--pu-text-muted)]") do
-                  plain attributes[:description]
-                end
-              end
-            end
-          end
-
           def render_key_value_pairs
             # Hidden sentinel input ensures the field is always present in params when the
             # component is rendered. Without this, removing all pairs would submit nothing,
@@ -75,40 +60,35 @@ module Plutonium
 
           def render_key_value_pair(key, value, index)
             div(
-              class: "key-value-pair flex items-center gap-2 p-2 border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)]",
+              class: "key-value-pair flex items-center gap-2",
               data_key_value_store_target: "pair"
             ) do
-              # Key input
-              input(
-                type: :text,
-                placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.key_placeholder"),
-                value: key,
-                name: "#{field_name}[#{index}][key]",
-                id: "#{field.dom.id}_#{index}_key",
-                class: "flex-1 px-3 py-1 text-sm border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)] focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-[var(--pu-surface)] text-[var(--pu-text)]",
-                data_key_value_store_target: "keyInput"
-              )
+              render_pair_input(:key, key, index)
+              render_pair_input(:value, value, index)
 
-              # Value input
-              input(
-                type: :text,
-                placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.value_placeholder"),
-                value: value,
-                name: "#{field_name}[#{index}][value]",
-                id: "#{field.dom.id}_#{index}_value",
-                class: "flex-1 px-3 py-1 text-sm border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)] focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-[var(--pu-surface)] text-[var(--pu-text)]",
-                data_key_value_store_target: "valueInput"
-              )
-
-              # Remove button
               button(
                 type: :button,
-                class: "px-2 py-1 text-danger-600 hover:text-danger-800 focus:outline-none transition-colors",
+                class: "pu-btn pu-btn-sm pu-btn-ghost text-danger-600 dark:text-danger-400",
+                aria_label: Plutonium::Translation.t("plutonium.ui.form.key_value_store.remove_pair"),
                 data_action: "key-value-store#removePair"
               ) do
-                plain "×"
+                render Phlex::TablerIcons::X.new(class: "w-4 h-4")
               end
             end
+          end
+
+          # `part` is :key or :value. The template row passes "__INDEX__", which
+          # the controller swaps for the real index when it clones the row.
+          def render_pair_input(part, value, index)
+            input(
+              type: :text,
+              placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.#{part}_placeholder"),
+              value:,
+              name: "#{field_name}[#{index}][#{part}]",
+              id: "#{field.dom.id}_#{index}_#{part}",
+              class: "pu-input flex-1 min-w-0",
+              data_key_value_store_target: "#{part}Input"
+            )
           end
 
           def render_add_button
@@ -129,36 +109,7 @@ module Plutonium
 
           def render_template
             template(data_key_value_store_target: "template") do
-              div(
-                class: "key-value-pair flex items-center gap-2 p-2 border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)]",
-                data_key_value_store_target: "pair"
-              ) do
-                input(
-                  type: :text,
-                  placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.key_placeholder"),
-                  name: "#{field_name}[__INDEX__][key]",
-                  id: "#{field.dom.id}___INDEX___key",
-                  class: "flex-1 px-3 py-1 text-sm border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)] focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-[var(--pu-surface)] text-[var(--pu-text)]",
-                  data_key_value_store_target: "keyInput"
-                )
-
-                input(
-                  type: :text,
-                  placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.value_placeholder"),
-                  name: "#{field_name}[__INDEX__][value]",
-                  id: "#{field.dom.id}___INDEX___value",
-                  class: "flex-1 px-3 py-1 text-sm border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)] focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-[var(--pu-surface)] text-[var(--pu-text)]",
-                  data_key_value_store_target: "valueInput"
-                )
-
-                button(
-                  type: :button,
-                  class: "px-2 py-1 text-danger-600 hover:text-danger-800 focus:outline-none transition-colors",
-                  data_action: "key-value-store#removePair"
-                ) do
-                  plain "×"
-                end
-              end
+              render_key_value_pair(nil, nil, "__INDEX__")
             end
           end
 

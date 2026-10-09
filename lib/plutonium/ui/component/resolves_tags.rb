@@ -34,7 +34,20 @@ module Plutonium
           tag ||= inferred_field_component
           return create_component(tag, component_theme_key(tag), **attributes, &) if tag.is_a?(Class)
 
+          # `field :x, as:` reaches every surface, but some aliases exist on
+          # only one (`:toggle` is form-only, `:badge` display-only). Those
+          # surfaces render what they would have inferred instead of raising.
+          # A tag NO surface defines is a typo and still raises below.
+          tag = inferred_field_component if !respond_to?(:"#{tag}_tag") && ResolvesTags.surface_tag?(tag)
+
           send(:"#{tag}_tag", **attributes, &)
+        end
+
+        # Whether any field surface (form or display; the table renders through
+        # a display builder) defines `tag`.
+        def self.surface_tag?(tag)
+          [Plutonium::UI::Form::Base::Builder, Plutonium::UI::Display::Base::Builder]
+            .any? { |builder| builder.method_defined?(:"#{tag}_tag") }
         end
 
         private

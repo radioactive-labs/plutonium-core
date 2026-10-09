@@ -131,7 +131,31 @@ class Plutonium::UI::Component::ResolvesTagsTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) { form_field.component_for(KeywordOnlyComponent) }
   end
 
+  # `field :x, as:` applies to every surface, so an alias only one surface
+  # defines must not crash the others; they render what they would infer.
+  test "a display-only alias falls back to the inferred input" do
+    assert_instance_of Phlexi::Form::Components::Input, form_field.component_for(:badge)
+  end
+
+  test "an alias no surface defines still raises" do
+    assert_raises(NoMethodError) { form_field.component_for(:no_such_widget) }
+  end
+
   # --- display builder ------------------------------------------------------
+
+  test "a form-only alias falls back to the inferred display" do
+    assert_instance_of Phlexi::Display::Components::Email, display_field.component_for(:toggle)
+  end
+
+  test "the table's display builder falls back on a form-only alias" do
+    field = Plutonium::UI::Table::Base::Display.new(User.new(email: "test@example.com")).field(:email)
+
+    assert_instance_of Phlexi::Display::Components::Email, field.component_for(:slim_select)
+  end
+
+  test "an alias no surface defines still raises on display" do
+    assert_raises(NoMethodError) { display_field.component_for(:no_such_widget) }
+  end
 
   test "the display builder also resolves a component class" do
     assert_instance_of DisplayCardComponent, display_field.component_for(DisplayCardComponent)

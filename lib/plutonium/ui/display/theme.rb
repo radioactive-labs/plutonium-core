@@ -41,8 +41,9 @@ module Plutonium
             link: "text-lg text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 whitespace-pre-line transition-colors",
 
             # Color display
-            color: "flex items-center text-lg text-[var(--pu-text)] whitespace-pre-line",
-            color_indicator: "w-10 h-10 rounded-lg mr-3 shadow-sm border border-[var(--pu-border)]",
+            color: "flex items-center gap-2",
+            color_indicator: "w-6 h-6 rounded border border-[var(--pu-border)]",
+            color_label: "text-sm text-[var(--pu-text-muted)]",
 
             # Boolean / badge pills — variant class is applied by the component.
             boolean: "",

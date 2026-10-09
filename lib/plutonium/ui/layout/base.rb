@@ -241,7 +241,7 @@ module Plutonium
             href:
               "https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css",
             integrity:
-              "uqD/OYCNfagd1EgXMgl5QedTD5K+B3e9b8GYo/41t7+Serf7CBxvl+tU1gHd+qd1",
+              "sha384-uqD/OYCNfagd1EgXMgl5QedTD5K+B3e9b8GYo/41t7+Serf7CBxvl+tU1gHd+qd1",
             crossorigin: "anonymous"
           )
         end

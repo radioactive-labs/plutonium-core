@@ -169,7 +169,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `key_value_store_tag` | Key/value pairs editor |
 
 ```ruby
-render field(:published_at).wrapped { |f| f.flatpickr_tag(min_date: Date.today, enable_time: true) }
+render field(:published_at).wrapped { |f| f.flatpickr_tag }
 
 render field(:avatar).wrapped do |f|
   f.uppy_tag(allowed_file_types: %w[.jpg .png], max_file_size: 5.megabytes)

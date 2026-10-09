@@ -19,7 +19,7 @@ module Plutonium
           private
 
           def pill(label:, variant:, icon:)
-            span(**attributes, class: tokens("pu-badge", variant), "aria-label": label) do
+            span(**mix(attributes, {class: tokens("pu-badge", variant)}), "aria-label": label) do
               render icon.new(class: "w-3.5 h-3.5")
               plain label
             end

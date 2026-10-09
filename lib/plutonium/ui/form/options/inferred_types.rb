@@ -26,6 +26,10 @@ module Plutonium
             case inferred_field_type
             when :rich_text
               return :markdown
+            when :json, :jsonb
+              # phlexi-form infers these as a plain :text textarea, which
+              # renders `Hash#to_s` and never parses the submission back.
+              return :json
             end
 
             inferred_field_component = super

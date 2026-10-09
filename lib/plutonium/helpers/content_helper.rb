@@ -10,9 +10,6 @@ module Plutonium
           title: content,
           data: {
             controller: "timeago",
-            timeago_refresh_interval_value: 1000,
-            timeago_include_seconds_value: true,
-            timeago_add_suffix_value: true,
             timeago_datetime_value: date.iso8601
           }
         )
