@@ -124,6 +124,9 @@ module Plutonium
             invalid_easymde: :invalid_textarea,
             neutral_easymde: :neutral_textarea,
 
+            # Star picker: styled by .pu-rating (components.css).
+            rating: "",
+
             # Key/value editor: the component lays out its own rows and inputs.
             key_value_store: "",
 

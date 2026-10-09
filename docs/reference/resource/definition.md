@@ -101,14 +101,14 @@ end
 | Category | Types |
 |---|---|
 | Rich text | `:markdown` (EasyMDE editor) |
-| Numeric | `:number`, `:integer`, `:decimal`, `:range` |
 | Text | `:string`, `:text`, `:email`, `:url`, `:phone`, `:password` (alias `:secret`) |
+| Numeric | `:number`, `:integer`, `:decimal`, `:range`, `:rating` (star picker, `max:`) |
 | Boolean | `:toggle` / `:switch` (switch: **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
 | Selection | `:select`, `:slim_select`, `:collection_radio_buttons`, `:collection_checkboxes` |
 | Files | `:file`, `:uppy`, `:attachment` (Active Storage), `:binary` (bytes in a `binary` column) |
 | Associations | `:association`, `:secure_association`, `:belongs_to`, `:has_many`, `:has_one` |
-| Special | `:hidden`, `:color`, `:phone` |
+| Special | `:hidden`, `:color`, `:json`, `:key_value` |
 
 ### Display types (show / index)
 

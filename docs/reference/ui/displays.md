@@ -78,8 +78,16 @@ Some types render with richer components automatically; you only declare an `as:
 | `:badge` | colored status pill | `enum` columns | `colors:` (per-value override) |
 | `:currency` | delimited, 2-decimal money | `has_cents` decimal accessors | `unit:`, `options:` |
 | `:color` | swatch + value | - | - |
+| `:key_value` | two-column list of keys and values; nested hashes/arrays as compact JSON | `hstore` columns | - |
 | `:binary` | `Binary data (12 KB)`, never the bytes | `binary` columns | - |
 | `:number` | delimited, at the column's scale (`1,999.50`) | `float` / `decimal` columns | - |
+| `:list` | chips | - | - |
+| `:relative_time` | "3 minutes ago", kept live; absolute time on hover | - | - |
+| `:code` | monospace value with a Copy button | - | - |
+| `:duration` | seconds as `2h 15m` | - | - |
+| `:file_size` | bytes as `12 KB` | - | - |
+| `:progress` | bar + percentage | - | `max:` (default 100) |
+| `:rating` | stars | - | `max:` (default 5) |
 
 ```ruby
 class OrderDefinition < ResourceDefinition
@@ -87,6 +95,11 @@ class OrderDefinition < ResourceDefinition
   display :total,   as: :currency, unit: "£"
   display :total,   as: :currency, unit: :currency_symbol   # Symbol → read off each record
   display :shipped, as: :boolean,  true_label: "Sent", false_label: "Pending"
+  field   :settings, as: :key_value     # key/value editor on the form, key/value list on show
+  display :last_seen_at, as: :relative_time
+  display :api_reference, as: :code
+  display :completion, as: :progress, max: 1   # stored as 0..1
+  field   :score, as: :rating                # star picker on the form, stars on show
 end
 ```
 

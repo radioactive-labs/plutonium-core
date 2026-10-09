@@ -165,6 +165,8 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `currency_tag` | Money input (number field + optional unit prefix) |
 | `uppy_tag` / `file_tag` | Uppy file upload |
 | `binary_tag` | Plain file input whose bytes go into a `binary` column |
+| `list_tag` | Chip input for array values |
+| `rating_tag` | Star picker (radio buttons, no JS); an optional rating gets a Clear option |
 | `secure_association_tag` | Association with policy-checked options (inline `+` add, typeahead) |
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
 | `key_value_store_tag` | Key/value pairs editor |
@@ -255,6 +257,17 @@ field :pin, as: :secret                # alias of :password
 
 > [!WARNING]
 > The heuristic is name-based and best-effort. A secret column with an unconventional name (e.g. `recovery_phrase`, `pin`) still renders its value into the page unless you set `as: :password`. Audit secret-bearing columns explicitly.
+
+### Lists and tags {#list-fields}
+
+`as: :list` edits an array value (a JSON or array column) as chips. Options go on `input`:
+
+```ruby
+field :nicknames, as: :list
+input :nicknames, suggestions: %w[Basin Tub], limit: 5   # addable: false allows only suggestions
+```
+
+Removing every chip saves an empty array.
 
 ### Binary columns {#binary-fields}
 

@@ -92,7 +92,18 @@ en:
           reenter_hint: "Re-enter the new value to save it."
         attachment:
           delete: "Delete"
+        rating:
+          clear: "Clear"
         binary:
           replace_hint: "Stored: %{size}. Choose a file to replace it."
       display:
         binary: "Binary data (%{size})"
+        code:
+          copy: "Copy"
+        duration:
+          days: "%{count}d"
+          hours: "%{count}h"
+          minutes: "%{count}m"
+          seconds: "%{count}s"
+        rating:
+          label: "%{value} out of %{max}"

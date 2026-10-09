@@ -55,6 +55,39 @@ module Plutonium
             create_component(Plutonium::UI::Display::Components::Number, :number, **, &)
           end
 
+          def key_value_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::KeyValue, :key_value, **, &)
+          end
+          alias_method :hstore_tag, :key_value_tag
+
+          def list_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::List, :list, **, &)
+          end
+
+          def relative_time_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::RelativeTime, :relative_time, **, &)
+          end
+
+          def code_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Code, :code, **, &)
+          end
+
+          def duration_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Duration, :duration, **, &)
+          end
+
+          def file_size_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::FileSize, :file_size, **, &)
+          end
+
+          def progress_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Progress, :progress, **, &)
+          end
+
+          def rating_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Rating, :rating, **, &)
+          end
+
           def binary_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Binary, :binary, **, &)
           end
@@ -63,7 +96,6 @@ module Plutonium
           alias_method :float_tag, :number_tag
           alias_method :decimal_tag, :number_tag
           alias_method :jsonb_tag, :json_tag
-          alias_method :key_value_tag, :hstore_tag
           alias_method :phlexi_tag, :phlexi_render_tag
           alias_method :secret_tag, :password_tag
         end
