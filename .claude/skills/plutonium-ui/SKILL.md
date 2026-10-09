@@ -309,7 +309,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | Tag | Input |
 |---|---|
 | `input_tag` | text (auto-detected type) |
-| `string_tag`, `text_tag`, `number_tag`, `email_tag`, `password_tag`, `url_tag`, `tel_tag`, `hidden_tag` | standard HTML inputs |
+| `string_tag`, `text_tag`, `number_tag`, `email_tag`, `password_tag` / `secret_tag`, `url_tag`, `hidden_tag` | standard HTML inputs |
 | `checkbox_tag`, `select_tag`, `radio_button_tag` | standard |
 | `toggle_tag` / `switch_tag` | switch-styled boolean (`as: :toggle` / `:switch`), default for boolean columns; `as: :boolean` for a plain checkbox |
 
@@ -335,11 +335,12 @@ render field(:avatar).wrapped       { |f| f.uppy_tag(allowed_file_types: %w[.jpg
 
 `password_tag` masks the stored value and **never emits the secret into the DOM**. A stored secret renders a sentinel; an untouched submit keeps it, an edit-to-new-value then failed re-render comes back blank + `required` (re-type; secrets are never echoed back), a *cleared* field comes back blank but **not** `required` (the clear may be intentional), a deliberately emptied field clears it (clear-by-blank), a typed value sets it. The sentinel is guarded by the `password-sentinel` Stimulus controller: the first edit (incl. **backspace**) wipes the whole field so a partial edit can't corrupt it.
 
-Auto-detected by name: `password`/`token`/`salt`, `encrypted_*`, `*_password`/`*_digest`/`*_hash`/`*_token`/`*_key`/`*_salt`, or any name containing `secret`. A convenience, **not** a guarantee: odd-named secrets (`recovery_phrase`, `pin`) still leak unless masked explicitly.
+Auto-detected by name: `password`/`token`/`salt`, `encrypted_*`, `*_password`/`*_digest`/`*_hash`/`*_token`/`*_key`/`*_salt`, or any name containing `secret`. The same names render `••••••••` on the show page, table, wizard summary and grid/kanban cards; `field`/`display` `as:` overrides it there too. A convenience, **not** a guarantee: odd-named secrets (`recovery_phrase`, `pin`) still leak unless masked explicitly.
 
 ```ruby
 field :api_token,   as: :string     # opt OUT: show a readable value (token to copy, checksum)
 field :recovery_phrase, as: :password   # opt IN: mask a secret the heuristic misses
+field :pin, as: :secret                 # :secret is an alias of :password
 ```
 
 ## Submit buttons

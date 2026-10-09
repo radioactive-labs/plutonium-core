@@ -270,3 +270,51 @@ class Plutonium::UI::Grid::CardShowLinkTest < Minitest::Test
     captured
   end
 end
+
+# Grid (and kanban, which wraps Grid::Card) slots print the raw attribute, so a
+# slot on a secret-named field leaked its value onto every card.
+class Plutonium::UI::Grid::CardSecretFieldTest < Minitest::Test
+  Record = Struct.new(:id, :name, :api_key, :secret_token)
+
+  def test_secret_slot_values_are_masked
+    assert_equal "••••••••", card.send(:field_value, :api_key)
+    assert_equal "••••••••", card.send(:field_value, :secret_token)
+  end
+
+  def test_blank_secrets_stay_blank_so_the_slot_collapses
+    assert_nil card(api_key: nil).send(:field_value, :api_key)
+  end
+
+  def test_ordinary_slots_are_untouched
+    assert_equal "Widget", card.send(:field_value, :name)
+  end
+
+  # The same opt-out the form and show page honour.
+  def test_an_explicit_non_password_as_shows_the_value
+    assert_equal "sk_live_123", card(fields: {api_key: {options: {as: :string}}}).send(:field_value, :api_key)
+  end
+
+  def test_an_explicit_password_as_masks_an_unconventional_name
+    assert_equal "••••••••", card(displays: {name: {options: {as: :password}}}).send(:field_value, :name)
+  end
+
+  def test_an_explicit_secret_as_masks_an_unconventional_name
+    assert_equal "••••••••", card(displays: {name: {options: {as: :secret}}}).send(:field_value, :name)
+  end
+
+  def test_a_display_declaration_wins_over_the_field_declaration
+    built = card(fields: {api_key: {options: {as: :string}}}, displays: {api_key: {options: {as: :password}}})
+
+    assert_equal "••••••••", built.send(:field_value, :api_key)
+  end
+
+  private
+
+  def card(api_key: "sk_live_123", fields: {}, displays: {})
+    definition = Object.new
+    definition.define_singleton_method(:defined_grid_fields) { {} }
+    definition.define_singleton_method(:defined_fields) { fields }
+    definition.define_singleton_method(:defined_displays) { displays }
+    Plutonium::UI::Grid::Card.new(Record.new(1, "Widget", api_key, "tok"), resource_definition: definition)
+  end
+end

@@ -34,6 +34,18 @@ class Plutonium::UI::Display::Options::InferredTypesTest < ActiveSupport::TestCa
     def self.has_cents_decimal_attribute?(attr) = attr == :amount
   end
 
+  # The form masks these names (see Form::Options::InferredTypes); the show
+  # page, table and wizard summary used to print them in clear text.
+  test "secret-bearing names infer the masked password display" do
+    %i[api_key secret client_secret salt password_salt token].each do |name|
+      assert_equal :password, Harness.new(:string, key: name).component, "expected #{name} to be masked"
+    end
+  end
+
+  test "ordinary names are not masked" do
+    assert_equal :__phlexi_fallback__, Harness.new(:string, key: :name).component
+  end
+
   test "boolean infers the boolean component (not the string fallback)" do
     assert_equal :boolean, Harness.new(:boolean).component
   end

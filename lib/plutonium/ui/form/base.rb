@@ -54,6 +54,7 @@ module Plutonium
           def password_tag(**, &)
             create_component(Components::Password, :password, **, &)
           end
+          alias_method :secret_tag, :password_tag
 
           def slim_select_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
