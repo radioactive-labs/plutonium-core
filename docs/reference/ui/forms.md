@@ -165,6 +165,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `currency_tag` | Money input (number field + optional unit prefix) |
 | `uppy_tag` / `file_tag` | Uppy file upload |
 | `binary_tag` | Plain file input whose bytes go into a `binary` column |
+| `rich_text_tag` | Action Text editor (Trix, or Lexxy once installed) |
 | `list_tag` | Chip input for array values |
 | `tags_tag` | Chip input for a no_fly_list `has_tags` context |
 | `rating_tag` | Star picker (radio buttons, no JS); an optional rating gets a Clear option |
@@ -258,6 +259,10 @@ field :pin, as: :secret                # alias of :password
 
 > [!WARNING]
 > The heuristic is name-based and best-effort. A secret column with an unconventional name (e.g. `recovery_phrase`, `pin`) still renders its value into the page unless you set `as: :password`. Audit secret-bearing columns explicitly.
+
+### Rich text (Action Text and Lexxy) {#rich-text-fields}
+
+A `has_rich_text` field renders Action Text's own editor tag, so it gets whichever editor the app has set up: Trix by default, or [Lexxy](https://lexxy.dev) once the `lexxy` gem is in the bundle (it takes over Action Text's helpers on Rails 8.0/8.1 and registers itself as the editor on 8.2). Lexxy needs Rails 8.0.2 or later. The editor's JavaScript and CSS come from the app's bundle, as Action Text's or Lexxy's install instructions describe. The show page renders the HTML through Action Text, which sanitizes it.
 
 ### Lists and tags {#list-fields}
 

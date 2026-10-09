@@ -15,6 +15,7 @@ module Plutonium
             email: "flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:text-primary-500 whitespace-nowrap transition-colors",
             phone: "flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:text-primary-500 whitespace-nowrap transition-colors",
             markdown: "format format-sm dark:format-invert format-primary max-w-none",
+            rich_text: "format format-sm dark:format-invert format-primary max-w-none",
             currency: "tabular-nums",
             # Boolean / badge pills: the component applies the variant class.
             boolean: "",

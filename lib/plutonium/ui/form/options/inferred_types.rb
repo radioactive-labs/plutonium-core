@@ -8,12 +8,15 @@ module Plutonium
           include Plutonium::UI::Options::HasCentsField
           include Plutonium::UI::Options::SecretField
           include Plutonium::UI::Options::TagsField
+          include Plutonium::UI::Options::RichTextField
 
           private
 
           def infer_field_component
             # A tag context is also a has_many of tag records; claim it first.
             return :tags if tags_field?
+            return :rich_text if rich_text_field?
+
             # Password detection lives in the string-type inference, not the
             # component-type inference (a `password` column infers as :string).
             # Route every inferred password/secret field to the masking Password
@@ -27,8 +30,6 @@ module Plutonium
             return :currency if has_cents_field?
 
             case inferred_field_type
-            when :rich_text
-              return :markdown
             when :binary
               # phlexi-form infers :file, which Plutonium renders as an Uppy
               # attachment; a binary column holds the file's bytes instead.

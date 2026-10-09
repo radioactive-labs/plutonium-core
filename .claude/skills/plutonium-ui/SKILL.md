@@ -326,6 +326,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
 | `key_value_store_tag` | Key/value pairs editor |
 | `currency_tag` | Money input (number field + unit prefix) |
+| `rich_text_tag` | Action Text editor (Trix, or Lexxy once the app installs it); default for `has_rich_text` |
 | `list_tag` | Chip input for array values (`suggestions:`, `limit:`, `addable: false`) |
 | `tags_tag` | Chip input for a no_fly_list `has_tags` context; default for those contexts |
 | `rating_tag` | Star picker (`max:`, default 5); a Clear option unless required |
@@ -1121,7 +1122,7 @@ end
 
 ### Display theme keys
 
-`fields_wrapper`, `fields_inner`, `sections_wrapper`, `section_grid`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`.
+`fields_wrapper`, `fields_inner`, `sections_wrapper`, `section_grid`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `rich_text`, `json`, `key_value`, `list` / `list_item`, `boolean`, `badge`, `currency`, `color`, `binary`, `relative_time`, `code`, `duration`, `file_size`, `progress`, `rating`. Table cells use `Plutonium::UI::Table::DisplayTheme`, which has its own (more compact) entry for each.
 
 ⚠️ **`fields_wrapper` is the CARD, `fields_inner` is the grid.** `fields_wrapper` is merged into a `Plutonium::UI::Block` (which supplies `pu-card` itself), so putting grid classes there styles the card, not the fields. Override `fields_inner` to change the unsectioned grid, and `section_grid` to change the grid inside a `display_layout` section.
 

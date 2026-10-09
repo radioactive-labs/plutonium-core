@@ -124,6 +124,9 @@ module Plutonium
             invalid_easymde: :invalid_textarea,
             neutral_easymde: :neutral_textarea,
 
+            # Action Text editor: Trix / Lexxy style themselves.
+            rich_text: "",
+
             # Star picker: styled by .pu-rating (components.css).
             rating: "",
 

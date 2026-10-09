@@ -58,6 +58,7 @@ module Plutonium
             json: "text-sm text-[var(--pu-text)] whitespace-pre font-mono bg-[var(--pu-surface-alt)] border border-[var(--pu-border-muted)] rounded-[var(--pu-radius-md)] p-4 overflow-x-auto",
             prefixed_icon: "w-6 h-6 mr-2 text-[var(--pu-text-muted)]",
             markdown: "format dark:format-invert format-primary max-w-none",
+            rich_text: "format dark:format-invert format-primary max-w-none",
             key_value: "grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[var(--pu-text)]",
             key_value_key: "font-medium text-[var(--pu-text-muted)] break-words",
             key_value_value: "break-words",

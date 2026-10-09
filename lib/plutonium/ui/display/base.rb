@@ -17,7 +17,10 @@ module Plutonium
           def markdown_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Markdown, :markdown, **, &)
           end
-          alias_method :rich_text_tag, :markdown_tag
+
+          def rich_text_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::RichText, :rich_text, **, &)
+          end
 
           def attachment_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Attachment, :attachment, **, &)

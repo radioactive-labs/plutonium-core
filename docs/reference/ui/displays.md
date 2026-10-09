@@ -81,6 +81,7 @@ Some types render with richer components automatically; you only declare an `as:
 | `:key_value` | two-column list of keys and values; nested hashes/arrays as compact JSON | `hstore` columns | - |
 | `:binary` | `Binary data (12 KB)`, never the bytes | `binary` columns | - |
 | `:number` | delimited, at the column's scale (`1,999.50`) | `float` / `decimal` columns | - |
+| `:rich_text` | Action Text HTML, sanitized | `has_rich_text` fields | - |
 | `:tags` | chips | no_fly_list `has_tags` contexts | - |
 | `:list` | chips | - | - |
 | `:relative_time` | "3 minutes ago", kept live; absolute time on hover | - | - |
@@ -131,7 +132,7 @@ end
 
 ### Theme keys
 
-`fields_wrapper`, `fields_inner`, `sections_wrapper`, `section_grid`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`, plus the shared section-chrome keys (`section_wrapper`, `section_header`, `section_summary`, `section_accent`, `section_heading`, `section_description`, `section_caret`, `section_body`).
+`fields_wrapper`, `fields_inner`, `sections_wrapper`, `section_grid`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `key_value` (+ `key_value_key`, `key_value_value`, `key_value_nested`), `list` / `list_item`, `rich_text`, `relative_time`, `code` (+ `code_value`, `code_copy`), `duration`, `file_size`, `progress` (+ `progress_track`, `progress_bar`, `progress_label`), `rating` (+ `rating_filled`, `rating_empty`), `binary`, `boolean`, `badge`, `currency`, `color`, plus the shared section-chrome keys (`section_wrapper`, `section_header`, `section_summary`, `section_accent`, `section_heading`, `section_description`, `section_caret`, `section_body`).
 
 ::: warning `fields_wrapper` is the card, `fields_inner` is the grid
 `fields_wrapper` is merged into a `Plutonium::UI::Block`, which supplies `pu-card` itself, grid classes put there style the card, not the fields. Override **`fields_inner`** for the unsectioned grid, and **`section_grid`** for the grid inside a [`display_layout`](/reference/resource/definition#display-layout) section.
