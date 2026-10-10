@@ -112,4 +112,10 @@ class Plutonium::UI::Dashboard::MetricTest < ActiveSupport::TestCase
   test "an unknown change_unit is refused" do
     assert_raises(ArgumentError) { render_metric(change_unit: :basis_points) { 1 } }
   end
+
+  test "a caption without a change shows no trend icon" do
+    html = render_metric { {value: 3, change_label: "from 12 ratings"} }
+    assert_match(/from 12 ratings/, html)
+    refute_match(/<svg/, html)
+  end
 end

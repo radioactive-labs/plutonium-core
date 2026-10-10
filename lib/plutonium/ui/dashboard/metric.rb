@@ -69,8 +69,11 @@ module Plutonium
         def render_change(data)
           trend = data[:trend] || :flat
           div(class: tokens("pu-metric-change", change_tone_class(trend))) do
-            render_trend_icon(trend)
-            span(class: "font-medium") { format_change(data[:change]) } if data[:change]
+            # A caption with no change (a count of ratings, say) is not a trend.
+            if data[:change]
+              render_trend_icon(trend)
+              span(class: "font-medium") { format_change(data[:change]) }
+            end
             span(class: "pu-metric-change-label") { data[:change_label] } if data[:change_label].present?
           end
         end
