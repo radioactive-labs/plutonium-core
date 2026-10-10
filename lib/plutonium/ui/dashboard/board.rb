@@ -6,7 +6,9 @@ module Plutonium
       # The card grid. Every lazy card is a `<turbo-frame src loading="lazy">`
       # holding a skeleton of its own shape, so the page paints at once and
       # each card's queries run in a separate request as it scrolls into
-      # view. A card declared `lazy: false` renders inline.
+      # view. A card declared `lazy: false` renders inline. Frames carry
+      # `target="_top"` so a link inside a card navigates the page, not the
+      # card's frame.
       class Board < Plutonium::UI::Component::Base
         include Phlex::Rails::Helpers::TurboFrameTag
 
@@ -54,6 +56,7 @@ module Plutonium
               src: dashboard_card_path(card),
               loading: "lazy",
               refresh: "morph",
+              target: "_top",
               class: tokens("block", span_classes(card)),
               **refresh_attributes(card)
             ) { render Skeleton.new(card:) }

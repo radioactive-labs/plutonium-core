@@ -15,7 +15,7 @@ module Plutonium
         end
 
         def view_template
-          turbo_frame_tag(@card.frame_id, class: "block") do
+          turbo_frame_tag(@card.frame_id, target: "_top", class: "block") do
             render Card.for(dashboard: @dashboard, card: @card)
           end
         end
