@@ -36,12 +36,14 @@ module Plutonium
           data[:change_label] ||= card.options[:change_label]
 
           if !data.key?(:change) && data[:previous].is_a?(Numeric) && data[:value].is_a?(Numeric)
-            data[:change] = percent_change(data[:value], data[:previous])
+            data[:change] = points? ? data[:value] - data[:previous] : percent_change(data[:value], data[:previous])
           end
 
           data[:trend] ||= infer_trend(data[:change]) if data.key?(:change)
           data
         end
+
+        def points? = card.options[:change_unit] == :points
 
         def percent_change(value, previous)
           return nil if previous.zero?
@@ -93,7 +95,8 @@ module Plutonium
           case change
           when Numeric
             sign = change.positive? ? "+" : ""
-            "#{sign}#{number_to_rounded(change, precision: 1, strip_insignificant_zeros: true)}%"
+            rounded = number_to_rounded(change, precision: 1, strip_insignificant_zeros: true)
+            points? ? t("plutonium.dashboard.metric.points", change: "#{sign}#{rounded}") : "#{sign}#{rounded}%"
           else change.to_s
           end
         end

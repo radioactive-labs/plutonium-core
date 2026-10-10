@@ -78,10 +78,12 @@ module Plutonium
       end
 
       # The card endpoint's path, threading the entity scope segment through so
-      # the frame stays inside the tenant. Resolved by the route's
-      # `dashboard_class` default, so `at:` / `as:` and a scope prefix are honoured.
+      # the frame stays inside the tenant, and the dashboard's filter values
+      # through as query parameters so the card reads what the page read.
+      # Resolved by the route's `dashboard_class` default, so `at:` / `as:` and
+      # a scope prefix are honoured.
       def dashboard_card_path(card)
-        options = {card: card.key}
+        options = current_dashboard.filter_values.merge(card: card.key)
         options[scoped_entity_param_key] = params[scoped_entity_param_key] if scoped_to_entity?
         current_engine.routes.url_helpers.public_send(dashboard_card_route_helper, **options)
       end

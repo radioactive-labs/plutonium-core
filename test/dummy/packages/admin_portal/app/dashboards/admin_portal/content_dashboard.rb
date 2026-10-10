@@ -4,6 +4,10 @@ module AdminPortal
   class ContentDashboard < Plutonium::Dashboard::Base
     presents label: "Content", description: "What the blog is publishing", icon: Phlex::TablerIcons::Article
 
+    filter :status, choices: {"all" => "All posts", "published" => "Published", "draft" => "Drafts"}, default: "all"
+    link :posts, label: "All posts", icon: Phlex::TablerIcons::FileText, href: -> { resource_url_for(::Blogging::Post, parent: nil) }
+    link :hidden, href: "/nowhere", condition: -> { false }
+
     metric(:posts, span: 4, icon: Phlex::TablerIcons::FileText, href: -> { resource_url_for(::Blogging::Post, parent: nil) }) do
       posts.count
     end
@@ -20,6 +24,9 @@ module AdminPortal
 
     private
 
-    def posts = authorized_resource_scope(::Blogging::Post)
+    def posts
+      scope = authorized_resource_scope(::Blogging::Post)
+      (filter_value(:status) == "all") ? scope : scope.where(status: filter_value(:status))
+    end
   end
 end

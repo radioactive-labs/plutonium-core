@@ -30,6 +30,30 @@ Default reload interval for every lazy card. `nil` (the default) disables it.
 
 Page width, one of `:sm`, `:md`, `:lg`, `:xl`, `:full`. Default `:full`.
 
+### filter(key, choices:, default: nil, label: nil)
+
+A page-level control every card reads, such as a period or a region.
+
+```ruby
+filter :period, choices: {"7" => "Last 7 days", "30" => "Last 30 days", "90" => "Last 90 days"}, default: "30"
+
+metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..).count }
+```
+
+- `choices:` maps each value to its label, in display order. `default:` must be one of the values and is the first when omitted.
+- The value comes from the query string under the filter's key. A value that is not one of the choices reads as the default.
+- Every lazy card's frame URL carries every filter's value, so a card's own request reads what the page read.
+- The page renders each filter as a segmented row of links above the cards, so a choice is a URL that survives a reload and can be shared.
+
+### link(key, href:, label: nil, icon: nil, condition: nil)
+
+A button in the toolbar above the cards, such as the dashboard's settings or a full report. `href:` and `condition:` take the same forms as a card's and are evaluated on the dashboard instance.
+
+```ruby
+link :settings, icon: Phlex::TablerIcons::Settings, href: -> { resource_url_for(Setting) },
+  condition: -> { allowed_to?(:update?, Setting) }
+```
+
 ## Cards
 
 ```ruby
@@ -70,7 +94,7 @@ The block returns a value or a hash.
 | Hash key | Meaning |
 |---|---|
 | `value` | The number or string. `nil` renders `plutonium.dashboard.metric.empty` |
-| `previous` | Computes `change` as a percentage from this value; a zero previous yields no percentage |
+| `previous` | Computes `change` from this value: a percentage of it, or the difference with `change_unit: :points`. A zero previous yields no percentage |
 | `change` | Numeric percentage points (`2.5` → `+2.5%`) or a string shown as-is |
 | `trend` | `:up`, `:down`, `:flat`; inferred from the sign of `change` |
 | `change_label` | Caption after the change |
@@ -83,6 +107,7 @@ The block returns a value or a hash.
 | `prefix:` / `suffix:` | String | Wrapped around the formatted value |
 | `positive:` | `:up` (default), `:down` | Which direction is good; drives the change colour |
 | `change_label:` | String | Same as the hash key |
+| `change_unit:` | `:percent` (default), `:points` | How the change reads. Use `:points` for a value that is itself a percentage: 50% to 55.6% reads `+5.6 pts`, not `+11.2%` |
 
 ### chart
 
@@ -106,6 +131,9 @@ No kind-specific options. The block is `instance_exec`ed in `Plutonium::UI::Dash
 |---|---|
 | `authorize?` | Override to gate the page and every card. Default `true` |
 | `visible_cards` | Cards whose `condition:` passes |
+| `filter_value(key)` | The filter's value for this request, or its default |
+| `filter_values` | `{key => value}` for every filter; what each card's frame URL carries |
+| `visible_links` | Toolbar links whose `condition:` passes |
 | `visible_card!(key)` | The card, or `Plutonium::Dashboard::UnknownCardError` (404) |
 | `refresh_for(card)` | The card's interval, else the dashboard's; `nil` for a card declared `refresh: false` |
 | `view_context` / `helpers` | The Rails view context |
@@ -117,7 +145,9 @@ No kind-specific options. The block is `instance_exec`ed in `Plutonium::UI::Dash
 |---|---|
 | `cards` | All declared cards, in order |
 | `find_card(key)` / `find_card!(key)` | Lookup by key |
+| `filters` / `find_filter(key)` | Declared filters |
+| `links` | Declared toolbar links |
 | `label`, `description`, `icon` | Resolved presentation |
 | `i18n_key`, `route_name` | `admin_portal/sales`, `sales` |
 
-Subclasses inherit the parent's cards and options by copy, so a portal-specific subclass can add cards without touching the parent.
+Subclasses inherit the parent's cards, filters, links and options by copy, so a portal-specific subclass can add cards without touching the parent.

@@ -2,8 +2,8 @@
 
 module Plutonium
   module Dashboard
-    # The author-facing class macros: `metric`, `chart`, `card`, `refresh`
-    # and `width`. Mixed into {Base}.
+    # The author-facing class macros: `metric`, `chart`, `card`, `filter`,
+    # `link`, `refresh` and `width`. Mixed into {Base}.
     module DSL
       extend ActiveSupport::Concern
 
@@ -45,6 +45,51 @@ module Plutonium
         #   end
         def card(key, **options, &block)
           add_card(key, kind: :custom, options:, block:)
+        end
+
+        # The declared filters, in declaration order.
+        def filters
+          @filters ||= []
+        end
+
+        # The declared toolbar links, in declaration order.
+        def links
+          @links ||= []
+        end
+
+        # A page-level control every card reads, such as a period or a region.
+        # The chosen value comes from the query string, is carried onto every
+        # lazy card's frame URL so each card sees what the page saw, and is
+        # read in a card block with `filter_value(key)`. The page renders the
+        # filters as a segmented control above the cards.
+        #
+        #   filter :period, choices: {"7" => "Last 7 days", "30" => "Last 30 days"}, default: "30"
+        #   metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..).count }
+        def filter(key, choices:, default: nil, label: nil)
+          key = key.to_sym
+          raise ArgumentError, "#{name || "dashboard"} already declares a filter #{key.inspect}" if find_filter(key)
+
+          filters << Filter.new(key, choices:, default:, label:)
+          filters.last
+        end
+
+        # A link in the toolbar above the cards, such as the dashboard's
+        # settings or a full report. `href:` and `condition:` are evaluated on
+        # the dashboard instance, like a card's.
+        #
+        #   link :settings, href: -> { resource_url_for(Setting) }, icon: Phlex::TablerIcons::Settings
+        def link(key, href:, label: nil, icon: nil, condition: nil)
+          key = key.to_sym
+          raise ArgumentError, "#{name || "dashboard"} already declares a link #{key.inspect}" if links.any? { |link| link.key == key }
+
+          links << Link.new(key, href:, label:, icon:, condition:)
+          links.last
+        end
+
+        # @return [Filter, nil]
+        def find_filter(key)
+          key = key.to_sym
+          filters.find { |filter| filter.key == key }
         end
 
         # Default refresh interval (seconds) for every lazy card. A card's own
@@ -95,6 +140,8 @@ module Plutonium
         def inherited(subclass)
           super
           subclass.instance_variable_set(:@cards, cards.dup)
+          subclass.instance_variable_set(:@filters, filters.dup)
+          subclass.instance_variable_set(:@links, links.dup)
           subclass.instance_variable_set(:@refresh, @refresh)
           subclass.instance_variable_set(:@width, @width)
         end

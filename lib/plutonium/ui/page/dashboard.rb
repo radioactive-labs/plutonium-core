@@ -36,6 +36,7 @@ module Plutonium
         attr_reader :dashboard
 
         def render_content
+          render Plutonium::UI::Dashboard::Toolbar.new(dashboard:)
           render Plutonium::UI::Dashboard::Board.new(dashboard:)
         end
 

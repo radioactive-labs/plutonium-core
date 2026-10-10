@@ -244,6 +244,54 @@ module Plutonium
         assert_equal false, klass.find_card(:a).refresh
       end
 
+      class FilteredDashboard < Plutonium::Dashboard::Base
+        filter :period, choices: {"7" => "Last 7 days", "30" => "Last 30 days"}, default: "30"
+        filter :region, choices: {"eu" => "Europe", "us" => "Americas"}
+        link :settings, href: -> { "/settings/#{filter_value(:region)}" }, label: "Settings"
+        link :admin, href: "/admin", condition: :admin?
+
+        def admin? = false
+      end
+
+      class ParamsViewContext
+        attr_reader :params
+
+        def initialize(params) = @params = ActionController::Parameters.new(params)
+      end
+
+      def test_filter_values_come_from_params_or_fall_back_to_the_default
+        dashboard = FilteredDashboard.new(ParamsViewContext.new(period: "7", region: "mars"))
+
+        assert_equal "7", dashboard.filter_value(:period)
+        assert_equal "eu", dashboard.filter_value(:region), "an unknown value reads as the default, the first choice here"
+        assert_equal({period: "7", region: "eu"}, dashboard.filter_values)
+        assert_raises(ArgumentError) { dashboard.filter_value(:nope) }
+      end
+
+      def test_links_evaluate_href_and_condition_on_the_instance
+        dashboard = FilteredDashboard.new(ParamsViewContext.new(region: "us"))
+
+        assert_equal [:settings], dashboard.visible_links.map(&:key)
+        assert_equal "/settings/us", dashboard.visible_links.first.href_for(dashboard)
+      end
+
+      def test_filter_declarations_are_validated
+        klass = Class.new(Plutonium::Dashboard::Base)
+        assert_raises(ArgumentError) { klass.filter(:a, choices: {}) }
+        assert_raises(ArgumentError) { klass.filter(:a, choices: {"x" => "X"}, default: "y") }
+        klass.filter(:a, choices: {"x" => "X"})
+        assert_raises(ArgumentError) { klass.filter(:a, choices: {"x" => "X"}) }
+      end
+
+      def test_filters_and_links_inherit_without_leaking_back
+        sub = Class.new(FilteredDashboard)
+        sub.filter(:extra, choices: {"1" => "One"})
+
+        assert_equal %i[period region extra], sub.filters.map(&:key)
+        assert_equal %i[period region], FilteredDashboard.filters.map(&:key)
+        assert_equal %i[settings admin], sub.links.map(&:key)
+      end
+
       def test_authorize_defaults_to_true
         assert dashboard.authorize?
       end
