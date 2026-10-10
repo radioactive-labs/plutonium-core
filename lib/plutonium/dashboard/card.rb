@@ -21,11 +21,14 @@ module Plutonium
 
       METRIC_FORMATS = %i[number currency percentage human].freeze
       METRIC_POSITIVE = %i[up down].freeze
+      # How a metric's change reads: a percent of the previous value, or the
+      # difference in points (for a value that is itself a percentage).
+      METRIC_CHANGE_UNITS = %i[percent points].freeze
       CHART_TYPES = %i[line area column bar pie donut scatter].freeze
 
       # Options every kind accepts.
       COMMON_OPTIONS = %i[label description icon span lazy refresh condition href].freeze
-      METRIC_OPTIONS = %i[format precision unit prefix suffix positive change_label].freeze
+      METRIC_OPTIONS = %i[format precision unit prefix suffix positive change_label change_unit].freeze
       CHART_OPTIONS = %i[type height].freeze
 
       attr_reader :key, :kind, :icon, :span, :refresh, :condition, :href, :block, :options, :dashboard_class
@@ -176,6 +179,11 @@ module Plutonium
         positive = specific.fetch(:positive, :up)
         unless METRIC_POSITIVE.include?(positive)
           raise ArgumentError, "metric #{key.inspect}: positive must be :up or :down, got #{positive.inspect}"
+        end
+
+        change_unit = specific.fetch(:change_unit, :percent)
+        unless METRIC_CHANGE_UNITS.include?(change_unit)
+          raise ArgumentError, "metric #{key.inspect}: change_unit must be one of #{METRIC_CHANGE_UNITS.inspect}, got #{change_unit.inspect}"
         end
 
         specific.merge(positive:)

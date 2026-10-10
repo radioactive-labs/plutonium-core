@@ -77,9 +77,22 @@ end
 
 ## metric
 
-Return a value, or a hash: `value` (required), `previous` (computes % change), `change` (numeric percentage points or a verbatim string), `trend` (`:up`/`:down`/`:flat`, inferred), `change_label`.
+Return a value, or a hash: `value` (required), `previous` (computes the change), `change` (a number or a verbatim string), `trend` (`:up`/`:down`/`:flat`, inferred), `change_label`.
 
-Options: `format:` (`:number` default, `:currency`, `:percentage`, `:human`, or `->(v) { ... }`), `precision:`, `unit:` (currency symbol), `prefix:`, `suffix:`, `positive:` (`:up` default, `:down` when falling is good), `change_label:`.
+Options: `format:` (`:number` default, `:currency`, `:percentage`, `:human`, or `->(v) { ... }`), `precision:`, `unit:` (currency symbol), `prefix:`, `suffix:`, `positive:` (`:up` default, `:down` when falling is good), `change_label:`, `change_unit:` (`:percent` default; `:points` for a value that is itself a percentage, so 50% to 55.6% reads `+5.6 pts`).
+
+## Filters and toolbar links
+
+```ruby
+filter :period, choices: {"7" => "Last 7 days", "30" => "Last 30 days"}, default: "30"
+link :settings, icon: Phlex::TablerIcons::Settings, href: -> { resource_url_for(Setting) }
+
+metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..).count }
+```
+
+- A filter's value comes from the query string; an unknown value reads as the default. Read it with `filter_value(:key)`, never `params[:key]` directly.
+- Every lazy card's frame URL carries the filter values, so lazy cards see the page's choice. Do not hand-roll query forwarding or a custom `DashboardsController` for this.
+- Filters render as segmented links and links as buttons in a toolbar above the cards; neither needs a custom page class.
 
 ## chart
 

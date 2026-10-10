@@ -114,6 +114,11 @@ module Plutonium
         # the portal's again, last, so bare helpers (`root_path` in the
         # sidebar) resolve against the engine like a source-defined controller.
         klass.include(namespace.railtie_routes_url_helpers) if namespace != Object
+        # The same anonymous `inherited` hook boots the controller before it
+        # has a name, so it never prepends the portal's views and a portal's
+        # own partials (an ejected sidebar) lose to the gem's. Boot it again
+        # now that it is named.
+        klass.boot
 
         if concern_name && (concern = concern_name.safe_constantize)
           klass.include concern

@@ -23,3 +23,4 @@ en:
         increase: "Up %{change}"
         decrease: "Down %{change}"
         unchanged: "No change"
+        points: "%{change} pts"

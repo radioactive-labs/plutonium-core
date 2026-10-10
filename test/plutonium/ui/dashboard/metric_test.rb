@@ -99,4 +99,23 @@ class Plutonium::UI::Dashboard::MetricTest < ActiveSupport::TestCase
   ensure
     Rails.application.config.consider_all_requests_local = original
   end
+
+  test "change_unit: :points reads a percentage's change as a difference" do
+    html = render_metric(format: :percentage, change_unit: :points) { {value: 55.6, previous: 50.0} }
+    assert_match(/>\+5\.6 pts</, html)
+    assert_match(/pu-metric-change-positive/, html)
+
+    html = render_metric(format: :percentage, change_unit: :points) { {value: 40.0, change: -2.5} }
+    assert_match(/>-2\.5 pts</, html)
+  end
+
+  test "an unknown change_unit is refused" do
+    assert_raises(ArgumentError) { render_metric(change_unit: :basis_points) { 1 } }
+  end
+
+  test "a caption without a change shows no trend icon" do
+    html = render_metric { {value: 3, change_label: "from 12 ratings"} }
+    assert_match(/from 12 ratings/, html)
+    refute_match(/<svg/, html)
+  end
 end
