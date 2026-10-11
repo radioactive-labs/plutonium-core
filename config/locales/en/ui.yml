@@ -94,6 +94,9 @@ en:
           delete: "Delete"
         rating:
           clear: "Clear"
+        association_choices:
+          none: "None"
+          empty: "No options available"
         binary:
           replace_hint: "Stored: %{size}. Choose a file to replace it."
       display:

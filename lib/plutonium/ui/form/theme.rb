@@ -149,7 +149,21 @@ module Plutonium
             polymorphic_association: :association,
             valid_polymorphic_association: :valid_association,
             invalid_polymorphic_association: :invalid_association,
-            neutral_polymorphic_association: :neutral_association
+            neutral_polymorphic_association: :neutral_association,
+
+            # List-style association variants (`as: :association_checkboxes`,
+            # `:association_toggles`, `:association_radio_buttons`). The bare key
+            # styles the list; `association_<control>` styles each control.
+            association_checkboxes: "flex flex-col gap-2",
+            association_toggles: "flex flex-col gap-2",
+            association_radio_buttons: "flex flex-col gap-2",
+            association_choice_label: "inline-flex items-center gap-2 text-sm text-[var(--pu-text)] cursor-pointer",
+            association_checkbox: :checkbox,
+            invalid_association_checkbox: :invalid_boolean,
+            association_toggle: :toggle,
+            invalid_association_toggle: :invalid_toggle,
+            association_radio_button: :radio_button,
+            invalid_association_radio_button: "pu-radio pu-input-invalid"
           })
         end
       end

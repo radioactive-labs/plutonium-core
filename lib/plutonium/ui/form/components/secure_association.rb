@@ -106,8 +106,11 @@ module Plutonium
             authorized_resource_scope(klass, relation: relation)
           end
 
+          # AssociationBase#build_attributes already calls
+          # build_association_attributes. Calling it here too ran it twice, and
+          # the second pass re-read the keys the first had deleted, silently
+          # dropping `skip_authorization:` and `add_action:`.
           def build_attributes
-            build_association_attributes
             super
             # Stash; the URL helper needs view_context which only exists
             # once we're rendering.

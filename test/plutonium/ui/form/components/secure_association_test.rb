@@ -137,6 +137,16 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
     assert_nil component.send(:normalize_simple_input, rejected.to_signed_global_id.to_s)
   end
 
+  # AssociationBase#build_attributes already runs build_association_attributes;
+  # running it a second time re-read the deleted keys and dropped both options.
+  def test_skip_authorization_and_add_action_survive_build
+    component = Plutonium::UI::Form::Base.new(KitchenSink.new).field(:user)
+      .component_for(:belongs_to, skip_authorization: true, add_action: false)
+
+    assert_equal true, component.instance_variable_get(:@skip_authorization)
+    assert_equal false, component.instance_variable_get(:@add_action)
+  end
+
   private
 
   # Lightweight build for normalize_simple_input tests — only what that
