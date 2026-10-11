@@ -56,7 +56,7 @@ module Plutonium
           value.attached? ? value.url : nil
         elsif value.respond_to?(:url)     # bare Shrine::UploadedFile, CarrierWave, ...
           value.url
-        elsif value.is_a?(String) && value.start_with?("http", "/")
+        elsif value.is_a?(String) && value.start_with?("http", "/", "data:image/")
           value
         end
       rescue ArgumentError, URI::InvalidURIError
@@ -72,7 +72,7 @@ module Plutonium
         # A URL-shaped positional subject is really an image, not an identity:
         # route it to src so Avatar("https://…/p.png") shows the image rather
         # than hashing the URL into a seed.
-        if src.nil? && subject.is_a?(String) && subject.start_with?("http", "/")
+        if src.nil? && subject.is_a?(String) && subject.start_with?("http", "/", "data:image/")
           src = subject
           subject = nil
         end

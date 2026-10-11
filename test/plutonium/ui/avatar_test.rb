@@ -27,6 +27,15 @@ class Plutonium::UI::AvatarTest < ActiveSupport::TestCase
     assert_equal "/uploads/y.png", Plutonium::UI::Avatar.resolve_image_src("/uploads/y.png")
   end
 
+  test "resolve_image_src passes through inline image data URIs" do
+    uri = "data:image/svg+xml,%3Csvg%2F%3E"
+    assert_equal uri, Plutonium::UI::Avatar.resolve_image_src(uri)
+  end
+
+  test "resolve_image_src ignores data URIs that are not images" do
+    assert_nil Plutonium::UI::Avatar.resolve_image_src("data:text/html,%3Cscript%3E")
+  end
+
   test "resolve_image_src ignores non-url strings" do
     assert_nil Plutonium::UI::Avatar.resolve_image_src("just a name")
   end
