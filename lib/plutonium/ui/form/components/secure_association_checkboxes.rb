@@ -18,8 +18,10 @@ module Plutonium
           # Unchecked boxes are not submitted, so without this blank value
           # clearing every box would leave the param out entirely and keep the
           # existing records. The blank is dropped by normalize_array_input.
+          # Disabled with the list: a disabled list submits no boxes, so a live
+          # blank would save as "no records" and wipe the association.
           def render_hidden_input
-            input(type: :hidden, name: attributes[:name], value: "", autocomplete: "off", hidden: true)
+            input(type: :hidden, name: attributes[:name], value: "", autocomplete: "off", hidden: true, disabled: attributes[:disabled])
           end
         end
       end

@@ -19,7 +19,9 @@ module Plutonium
         class SecureAssociationChoices < SecureAssociation
           def view_template
             div(class: "flex items-start space-x-1") do
-              div(id: attributes[:id], class: attributes[:class], role: group_role) do
+              # The wrapper's <label for=> points at this id, but a label can't
+              # name a div, so the group carries the field label itself.
+              div(id: attributes[:id], class: attributes[:class], role: group_role, aria_label: field.label) do
                 render_hidden_input
                 render_blank_choice if include_blank?
                 render_choices

@@ -59,6 +59,21 @@ class Plutonium::UI::Form::Components::SecureAssociationChoicesTest < ActiveSupp
     assert_equal [@acme.to_signed_global_id], extracted[:organization_sgids]
   end
 
+  # Disabled boxes aren't submitted; a live blank would clear the association.
+  test "a disabled checkbox list disables its blank too" do
+    html = render_input(@user, :organizations, :association_checkboxes, disabled: true)
+
+    assert html.at_css("input[type=hidden]")["disabled"]
+    assert html.css("input[type=checkbox]").all? { |box| box["disabled"] }
+  end
+
+  test "the group is named by the field label" do
+    html = render_input(@user, :organizations, :association_checkboxes)
+    expected = form_field(@user, :organizations).label
+
+    assert_equal expected, html.at_css("[role=group]")["aria-label"]
+  end
+
   test "toggles render switch-styled checkboxes" do
     boxes = render_input(@user, :organizations, :association_toggles).css("input[type=checkbox]")
 
