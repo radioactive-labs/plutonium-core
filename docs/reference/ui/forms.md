@@ -171,6 +171,8 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `rating_tag` | Star picker (radio buttons, no JS); an optional rating gets a Clear option |
 | `secure_association_tag` | Association with policy-checked options (inline `+` add, typeahead) |
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
+| `association_checkboxes_tag` / `association_toggles_tag` | has_many / habtm as a list of checkboxes or switches (see [Association inputs](#association-inputs)) |
+| `association_radio_buttons_tag` | belongs_to / has_one as a radio group |
 | `key_value_store_tag` | Key/value pairs editor |
 
 ```ruby
@@ -332,6 +334,27 @@ input :author, label_method: :email
 ::: tip Large association tables
 For large target tables, write an explicit `search` block on the target resource definition; the fallback's leading-wildcard `LIKE` can't use a b-tree index.
 :::
+
+### List variants: checkboxes, toggles, radio buttons
+
+For a short list of options, render one control per record instead of a dropdown:
+
+```ruby
+input :tags, as: :association_checkboxes      # has_many / habtm
+input :tags, as: :association_toggles         # same, styled as switches
+input :category, as: :association_radio_buttons # belongs_to / has_one
+```
+
+The variants share the select's security: options come from the target's policy scope (or `choices:`), values are signed global ids, and submitted ids are checked against the authorized relation. The inline `+` add button renders next to the list, and `add_action:`, `skip_authorization:`, `choices:` and `label_method:` work the same way.
+
+How they differ from the select:
+
+- **Every option renders.** There is no typeahead and no default `choice_limit`, because a selected record left out of the list would be removed when the form is saved. Use them for short lists. Passing `choice_limit:` turns the cap back on.
+- **Unchecking everything clears the association.** The checkbox list submits a blank value, so an empty selection saves as no records.
+- **Optional radio groups get a "None" choice.** A radio group can't be cleared otherwise. It is left out when the field is required; force it either way with `include_blank: true/false`. Its label is the field's `placeholder:` if set.
+- **The macro has to fit.** Checkboxes and toggles take a has_many or habtm; radio buttons take a belongs_to or has_one. A mismatch raises `ArgumentError` when the form renders. Polymorphic associations are not supported.
+
+The list and its controls are themed by `association_checkboxes`, `association_toggles`, `association_radio_buttons` (the list), `association_checkbox`, `association_toggle`, `association_radio_button` (each control) and `association_choice_label`.
 
 ## Submit buttons
 
