@@ -105,13 +105,21 @@ module Plutonium
           value = field_value(slots[:image])
 
           if size == :cover
-            # Cover is a full-width banner, not an avatar: only render when an
-            # actual image resolves (no deterministic fallback).
+            # Cover is a full-width banner, not an avatar, so a record with no
+            # image gets no generated stand-in. It still gets the banner's
+            # space, as an empty slot elsewhere gets its em-dash: without it the
+            # card is a banner shorter than its neighbours, and the row stretches
+            # it into a block of blank card under its text.
             src = Plutonium::UI::Avatar.resolve_image_src(value, helpers)
-            return unless src
 
             div(class: "w-full aspect-video bg-[var(--pu-surface-alt)] overflow-hidden") do
-              img(src: src, alt: header_text.to_s, class: "w-full h-full object-cover")
+              if src
+                img(src: src, alt: header_text.to_s, class: "w-full h-full object-cover")
+              else
+                div(class: "w-full h-full flex items-center justify-center text-[var(--pu-text-subtle)]", aria_hidden: "true") do
+                  render Phlex::TablerIcons::Photo.new(class: "w-8 h-8")
+                end
+              end
             end
           else
             # Small avatar slot: render the resolved image, or Avatar's generic

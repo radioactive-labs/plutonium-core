@@ -1011,6 +1011,8 @@ end
 
 Grid slots, `:image`, `:header`, `:subheader`, `:body`, `:meta`, `:footer`, are all optional. `:meta` accepts an array; the rest are single fields. Slots pointing at policy-blocked fields collapse silently.
 
+In the `:media` layout a record whose image does not resolve keeps the cover's space, with a neutral icon, so cards in a row stay one height. An image may be an attachment, an `http` or root-relative URL, or a `data:image/` URI.
+
 Only declare `index_views` explicitly to **disable** one (e.g. `index_views :grid` to drop the table view).
 
 ## Custom page classes

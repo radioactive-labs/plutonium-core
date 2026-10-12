@@ -1116,7 +1116,7 @@ Only declare `index_views` explicitly if you want to **disable** one (e.g. `inde
 | `grid_layout :media` | `:compact` (image left) or `:media` (image on top). |
 | `grid_columns 3` | Override responsive column count. |
 
-All grid slots are optional; slots pointing at unpermitted fields collapse silently.
+All grid slots are optional; slots pointing at unpermitted fields collapse silently. In the `:media` layout a record whose image does not resolve keeps the cover's space, with a neutral icon, so cards in a row stay one height. An image may be an attachment, an `http` or root-relative URL, or a `data:image/` URI.
 
 ---
 

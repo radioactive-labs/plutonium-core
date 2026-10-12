@@ -318,3 +318,45 @@ class Plutonium::UI::Grid::CardSecretFieldTest < Minitest::Test
     Plutonium::UI::Grid::Card.new(Record.new(1, "Widget", api_key, "tok"), resource_definition: definition)
   end
 end
+
+# The media layout's cover is the card's top half, so it keeps its space when a
+# record has no image: a shorter card would be stretched by its row into a block
+# of blank card under its text.
+class Plutonium::UI::Grid::CardCoverTest < Minitest::Test
+  def test_a_resolved_image_fills_the_cover
+    html = render_cover("https://cdn.example/photo.jpg")
+
+    assert_includes html, "aspect-video"
+    assert_includes html, %(src="https://cdn.example/photo.jpg")
+  end
+
+  def test_no_image_keeps_the_cover_space_with_a_neutral_icon
+    html = render_cover(nil)
+
+    assert_includes html, "aspect-video"
+    refute_includes html, "<img"
+    assert_includes html, %(aria-hidden="true")
+    assert_includes html, "<svg"
+  end
+
+  def test_an_inline_image_data_uri_fills_the_cover
+    html = render_cover("data:image/svg+xml,%3Csvg%2F%3E")
+
+    assert_includes html, %(src="data:image/svg+xml,%3Csvg%2F%3E")
+  end
+
+  private
+
+  # Renders only the cover slot, with the card's lookups stubbed: the slot is
+  # what is under test, not the card's policy and action wiring.
+  def render_cover(value)
+    definition = Object.new
+    definition.define_singleton_method(:defined_grid_fields) { {image: :cover} }
+    card = Plutonium::UI::Grid::Card.new(Struct.new(:id).new(1), resource_definition: definition)
+    card.define_singleton_method(:field_value) { |_name| value }
+    card.define_singleton_method(:header_text) { "Record" }
+    card.define_singleton_method(:helpers) { nil }
+    card.define_singleton_method(:view_template) { render_image_slot(size: :cover) }
+    card.call
+  end
+end
