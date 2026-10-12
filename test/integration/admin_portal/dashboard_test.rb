@@ -156,6 +156,21 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     assert_match(/vs\. last month/, response.body)
   end
 
+  # Card links (the title, the open arrow, anything a custom card draws) leave
+  # the dashboard. Without `target="_top"` Turbo would load them into the
+  # card's own frame. Lazy loading and frame-refresh go through `src`, which
+  # `target` does not touch.
+  test "card frames send their links to the whole page" do
+    get base
+    frames = response.body.scan(/<turbo-frame[^>]*\bid="pu-dashboard-card-[^"]*"[^>]*>/)
+    assert_not_empty frames
+    frames.each { |frame| assert_includes frame, %(target="_top") }
+    assert_includes frame_tag("pu-dashboard-card-users"), %(src="/admin/dashboards/overview/cards/users")
+
+    get_frame "#{base}/cards/users", "pu-dashboard-card-users"
+    assert_includes frame_tag("pu-dashboard-card-users"), %(target="_top")
+  end
+
   test "a direct visit to a card URL renders it inside the layout" do
     get "#{base}/cards/users"
     assert_response :success
