@@ -69,6 +69,13 @@ class Plutonium::Routing::DashboardRegistrationTest < Minitest::Test
     assert_includes controller.ancestors, AdminPortal::Concerns::Controller
   end
 
+  def test_the_synthesized_controller_resolves_the_portals_own_views_first
+    portal_views = AdminPortal::Engine.paths["app/views"].first
+
+    assert_equal portal_views, AdminPortal::DashboardsController.view_paths.first.to_s,
+      "a portal's ejected partials, such as its sidebar, must win over the gem's"
+  end
+
   def test_records_the_dashboard_on_the_engine_register
     assert_equal [OverviewDashboard, AdminPortal::ContentDashboard], AdminPortal::Engine.dashboard_register.dashboards
     assert_equal [TeamDashboard], OrgPortal::Engine.dashboard_register.dashboards

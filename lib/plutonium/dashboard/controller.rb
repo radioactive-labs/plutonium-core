@@ -31,6 +31,7 @@ module Plutonium
       # GET the mount — the full page.
       def show
         authorize_dashboard!
+        ensure_filters_clear_of_entity_param!
         set_page_title(current_dashboard_class.label)
         render Plutonium::UI::Page::Dashboard.new(dashboard: current_dashboard)
       end
@@ -38,6 +39,7 @@ module Plutonium
       # GET <mount>/cards/:card — one card, wrapped in its turbo frame.
       def card
         authorize_dashboard!
+        ensure_filters_clear_of_entity_param!
         card = current_dashboard.visible_card!(params[:card])
         render Plutonium::UI::Dashboard::Frame.new(dashboard: current_dashboard, card:)
       end
@@ -77,11 +79,23 @@ module Plutonium
         )
       end
 
+      # The tenant's param key belongs to the engine, so it cannot be refused
+      # when the filter is declared. A filter under that key would read the
+      # tenant id and be overwritten on every card's frame URL.
+      def ensure_filters_clear_of_entity_param!
+        return unless scoped_to_entity? && current_dashboard_class.find_filter(scoped_entity_param_key)
+
+        raise ArgumentError,
+          "#{current_dashboard_class.name} filter #{scoped_entity_param_key.inspect} collides with the portal's entity param, pick another name"
+      end
+
       # The card endpoint's path, threading the entity scope segment through so
-      # the frame stays inside the tenant. Resolved by the route's
-      # `dashboard_class` default, so `at:` / `as:` and a scope prefix are honoured.
+      # the frame stays inside the tenant, and the dashboard's filter values
+      # through as query parameters so the card reads what the page read.
+      # Resolved by the route's `dashboard_class` default, so `at:` / `as:` and
+      # a scope prefix are honoured.
       def dashboard_card_path(card)
-        options = {card: card.key}
+        options = current_dashboard.filter_values.merge(card: card.key)
         options[scoped_entity_param_key] = params[scoped_entity_param_key] if scoped_to_entity?
         current_engine.routes.url_helpers.public_send(dashboard_card_route_helper, **options)
       end

@@ -92,6 +92,23 @@ module Plutonium
         card
       end
 
+      # A filter's chosen value for this request, or its default.
+      # @raise [ArgumentError] when the dashboard declares no such filter
+      def filter_value(key)
+        filter_values.fetch(key.to_sym) { raise ArgumentError, "#{self.class.name} declares no filter #{key.inspect}" }
+      end
+
+      # Every filter's chosen value, keyed by filter: what the page carries
+      # onto each card's frame URL. Read once per request.
+      def filter_values
+        @filter_values ||= self.class.filters.to_h { |filter| [filter.key, filter.value_from(params)] }.freeze
+      end
+
+      # The toolbar links whose `condition:` passes for this request.
+      def visible_links
+        self.class.links.select { |link| link.visible?(self) }
+      end
+
       # The refresh interval for a card: its own, else the dashboard default.
       # A card declared `refresh: false` never refreshes.
       def refresh_for(card)

@@ -9,7 +9,7 @@ module Plutonium
       #
       #   {value: 1_240}                                   # just the number
       #   {value: 1_240, previous: 1_100}                  # change computed: +12.7%
-      #   {value: 1_240, change: 12.7}                     # change in percentage points
+      #   {value: 1_240, change: 12.7}                     # +12.7% (+12.7 pts with change_unit: :points)
       #   {value: 1_240, change: "+140", trend: :up}       # change shown verbatim
       #   {value: 98.2, change_label: "vs. last week"}     # caption after the change
       #
@@ -36,12 +36,16 @@ module Plutonium
           data[:change_label] ||= card.options[:change_label]
 
           if !data.key?(:change) && data[:previous].is_a?(Numeric) && data[:value].is_a?(Numeric)
-            data[:change] = percent_change(data[:value], data[:previous])
+            data[:change] = points? ? data[:value] - data[:previous] : percent_change(data[:value], data[:previous])
           end
 
+          # A `previous` of zero leaves `change` nil but still sets the trend
+          # key, so a captioned row shows a neutral dash.
           data[:trend] ||= infer_trend(data[:change]) if data.key?(:change)
           data
         end
+
+        def points? = card.options[:change_unit] == :points
 
         def percent_change(value, previous)
           return nil if previous.zero?
@@ -65,9 +69,12 @@ module Plutonium
         end
 
         def render_change(data)
+          # A caption with no change or trend (a count of ratings, say) is
+          # not a trend: no icon, neutral tone.
+          trending = data.key?(:trend)
           trend = data[:trend] || :flat
-          div(class: tokens("pu-metric-change", change_tone_class(trend))) do
-            render_trend_icon(trend)
+          div(class: tokens("pu-metric-change", change_tone_class(trending ? trend : :flat))) do
+            render_trend_icon(trend) if trending
             span(class: "font-medium") { format_change(data[:change]) } if data[:change]
             span(class: "pu-metric-change-label") { data[:change_label] } if data[:change_label].present?
           end
@@ -93,7 +100,8 @@ module Plutonium
           case change
           when Numeric
             sign = change.positive? ? "+" : ""
-            "#{sign}#{number_to_rounded(change, precision: 1, strip_insignificant_zeros: true)}%"
+            rounded = number_to_rounded(change, precision: 1, strip_insignificant_zeros: true)
+            points? ? t("plutonium.dashboard.metric.points", change: "#{sign}#{rounded}") : "#{sign}#{rounded}%"
           else change.to_s
           end
         end

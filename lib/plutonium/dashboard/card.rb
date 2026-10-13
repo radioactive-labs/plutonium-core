@@ -9,6 +9,8 @@ module Plutonium
     # Built by {DSL} at class-load and frozen; everything request-dependent
     # (label translation, `condition:`, `href:`) is resolved per render.
     class Card
+      include Evaluation
+
       KINDS = %i[metric chart custom].freeze
 
       # The dashboard grid is 12 columns wide, so halves, thirds and quarters
@@ -21,11 +23,14 @@ module Plutonium
 
       METRIC_FORMATS = %i[number currency percentage human].freeze
       METRIC_POSITIVE = %i[up down].freeze
+      # How a metric's change reads: a percent of the previous value, or the
+      # difference in points (for a value that is itself a percentage).
+      METRIC_CHANGE_UNITS = %i[percent points].freeze
       CHART_TYPES = %i[line area column bar pie donut scatter].freeze
 
       # Options every kind accepts.
       COMMON_OPTIONS = %i[label description icon span lazy refresh condition href].freeze
-      METRIC_OPTIONS = %i[format precision unit prefix suffix positive change_label].freeze
+      METRIC_OPTIONS = %i[format precision unit prefix suffix positive change_label change_unit].freeze
       CHART_OPTIONS = %i[type height].freeze
 
       attr_reader :key, :kind, :icon, :span, :refresh, :condition, :href, :block, :options, :dashboard_class
@@ -87,14 +92,7 @@ module Plutonium
       # the page AND the card endpoint, so a hidden card cannot be fetched
       # directly.
       def visible?(dashboard)
-        return true if condition.nil?
-
-        result = case condition
-        when Symbol then dashboard.send(condition)
-        when Proc then evaluate_on(dashboard, condition)
-        else condition
-        end
-        result ? true : false
+        condition_passes?(dashboard, condition)
       end
 
       # The card's link target for this request, if any.
@@ -135,10 +133,6 @@ module Plutonium
 
       private
 
-      def evaluate_on(dashboard, callable)
-        callable.arity.zero? ? dashboard.instance_exec(&callable) : dashboard.instance_exec(dashboard, &callable)
-      end
-
       def validate_span!(span)
         return GRID_COLUMNS if span == :full
         return span if span.is_a?(Integer) && span.between?(1, GRID_COLUMNS)
@@ -176,6 +170,11 @@ module Plutonium
         positive = specific.fetch(:positive, :up)
         unless METRIC_POSITIVE.include?(positive)
           raise ArgumentError, "metric #{key.inspect}: positive must be :up or :down, got #{positive.inspect}"
+        end
+
+        change_unit = specific.fetch(:change_unit, :percent)
+        unless METRIC_CHANGE_UNITS.include?(change_unit)
+          raise ArgumentError, "metric #{key.inspect}: change_unit must be one of #{METRIC_CHANGE_UNITS.inspect}, got #{change_unit.inspect}"
         end
 
         specific.merge(positive:)
