@@ -154,6 +154,27 @@ class Plutonium::UI::Form::Components::SecureAssociationChoicesTest < ActiveSupp
     assert_equal [@globex.id.to_s], checked
   end
 
+  # Otherwise the browser falls back to the blank option and a save that
+  # never touched the field would clear it.
+  test "a capped select still renders and selects the current record" do
+    current = User.create!(email: "current-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    html = render_input(KitchenSink.new(user: current), :user, :belongs_to, choice_limit: 1)
+    selected = html.at_css("option[selected]")
+
+    assert_equal 2, html.css("option:not([value=''])").size
+    assert_equal current.id.to_s, SignedGlobalID.parse(selected["value"]).model_id
+  end
+
+  test "list variants put the caller's attributes on the group and autofocus the first control" do
+    html = render_input(@user, :organizations, :association_checkboxes, data: {controller: "picker"}, autofocus: true)
+    boxes = html.css("input[type=checkbox]")
+
+    assert_equal "picker", html.at_css("[role=group]")["data-controller"]
+    assert boxes.first.key?("autofocus")
+    refute boxes.drop(1).any? { |box| box.key?("autofocus") }
+    assert_nil html.at_css("[role=group]")["name"]
+  end
+
   test "an empty choice list says so" do
     html = render_input(@user, :organizations, :association_checkboxes, choices: [])
 

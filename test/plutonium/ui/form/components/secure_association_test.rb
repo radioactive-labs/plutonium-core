@@ -95,6 +95,16 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
     assert_nil component.send(:normalize_simple_input, out_of_scope.to_signed_global_id.to_s)
   end
 
+  # Keeping the value the field already holds is not a new grant, so it
+  # survives a save even when the viewer's scope no longer reaches it.
+  def test_normalize_simple_input_accepts_the_current_record_outside_the_scope
+    in_scope = User.create!(email: "in-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    current = User.create!(email: "cur-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    component = build_normalize_component(klass: User, relation: User.where(id: in_scope.id), current:)
+
+    assert_equal current.to_signed_global_id, component.send(:normalize_simple_input, current.to_signed_global_id.to_s)
+  end
+
   def test_normalize_simple_input_rejects_sgid_for_wrong_class
     org = Organization.create!(name: "org-#{SecureRandom.hex(4)}")
     component = build_normalize_component(klass: User, relation: User.all)
@@ -161,13 +171,13 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
 
   # Lightweight build for normalize_simple_input tests — only what that
   # method touches (reflection.klass, choices_from_association, raw_choices).
-  def build_normalize_component(klass:, relation:, raw_choices: nil)
+  def build_normalize_component(klass:, relation:, raw_choices: nil, current: nil)
     component = Plutonium::UI::Form::Components::SecureAssociation.allocate
     component.instance_variable_set(:@skip_authorization, true)
     component.instance_variable_set(:@raw_choices, raw_choices)
 
     reflection = Struct.new(:klass, :macro, :name).new(klass, :belongs_to, :user)
-    field_stub = Struct.new(:association_reflection).new(reflection)
+    field_stub = Struct.new(:association_reflection, :object).new(reflection, Struct.new(:user).new(current))
     component.define_singleton_method(:field) { field_stub }
     component.define_singleton_method(:choices_from_association) { |_| relation } if relation
     component

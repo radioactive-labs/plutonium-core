@@ -21,7 +21,7 @@ module Plutonium
             div(class: "flex items-start space-x-1") do
               # The wrapper's <label for=> points at this id, but a label can't
               # name a div, so the group carries the field label itself.
-              div(id: attributes[:id], class: attributes[:class], role: group_role, aria_label: field.label) do
+              div(**group_attributes) do
                 render_hidden_input
                 render_blank_choice if include_blank?
                 render_choices
@@ -42,6 +42,14 @@ module Plutonium
           def supported_macros = raise(NotImplementedError, "#{self.class}#supported_macros")
 
           def group_role = "group"
+
+          # Everything the caller passed (data-*, aria-*, ...) lands on the
+          # group; what belongs to a form control goes on each choice instead.
+          CONTROL_ATTRIBUTES = %i[name required disabled multiple size autofocus form value].freeze
+
+          def group_attributes
+            mix(attributes.except(*CONTROL_ATTRIBUTES), {role: group_role, aria: {label: field.label}})
+          end
 
           def build_association_attributes
             super
@@ -70,25 +78,6 @@ module Plutonium
             @typeahead_option = false
           end
 
-          # Capped like the select (`choice_limit:`, DEFAULT_CHOICE_LIMIT by
-          # default), but the selected records always render: an unrendered
-          # checkbox is not submitted, so saving the form would drop it.
-          def choices
-            @choices ||= begin
-              collection = @raw_choices || authorized_relation
-              if @choice_limit && collection.respond_to?(:limit)
-                collection = (collection.limit(@choice_limit).to_a + collection.where(id: selected_record_ids).to_a).uniq
-              end
-              build_choice_mapper(collection)
-            end
-          end
-
-          # Every option renders, so compare against the selection once per
-          # option instead of re-parsing it for every selected record.
-          def selected?(option)
-            selected_gids.include?(SignedGlobalID.parse(option)&.uri&.to_s)
-          end
-
           def render_choices
             if choices.values.empty?
               p(class: "pu-hint") { Plutonium::Translation.t("plutonium.ui.form.association_choices.empty") }
@@ -96,11 +85,11 @@ module Plutonium
             end
 
             choices.each.with_index do |(value, text), index|
-              render_choice(value:, text:, id: "#{attributes[:id]}_#{index}", checked: selected?(value))
+              render_choice(value:, text:, id: "#{attributes[:id]}_#{index}", checked: selected?(value), autofocus: index.zero? && attributes[:autofocus])
             end
           end
 
-          def render_choice(value:, text:, id:, checked:)
+          def render_choice(value:, text:, id:, checked:, autofocus: false)
             label(for: id, class: themed(:association_choice_label, field)) do
               input(
                 type: control_type,
@@ -110,21 +99,13 @@ module Plutonium
                 checked:,
                 required: control_required?,
                 disabled: attributes[:disabled],
+                form: attributes[:form],
+                autofocus:,
                 class: themed(control_theme, field)
               )
               span { text }
             end
           end
-
-          def selected_gids
-            @selected_gids ||= Array(singular? ? singular_field_value : collection_field_value).compact.to_set { |sgid| sgid.uri.to_s }
-          end
-
-          def selected_record_ids
-            Array(field.object.public_send(association_reflection.name)).map(&:id)
-          end
-
-          def singular? = %i[belongs_to has_one].include?(association_reflection.macro)
 
           def render_hidden_input
           end
