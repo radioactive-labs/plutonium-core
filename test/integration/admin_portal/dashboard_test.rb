@@ -239,10 +239,11 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     get "/admin/dashboards/content"
     assert_match(%r{data-dashboard-filter="status"}, response.body)
     assert_match(%r{href="/admin/dashboards/content\?status=published"}, response.body)
-    assert_match(%r{aria-current="true"[^>]*>All posts<|>All posts<}, response.body)
+    assert_select %(nav[data-dashboard-filter="status"] a[aria-current="true"]), count: 1, text: "All posts"
     assert_includes frame_tag("pu-dashboard-card-posts"), %(src="/admin/dashboards/content/cards/posts?status=all")
 
     get "/admin/dashboards/content", params: {status: "draft"}
+    assert_select %(nav[data-dashboard-filter="status"] a[aria-current="true"]), count: 1, text: "Drafts"
     assert_includes frame_tag("pu-dashboard-card-posts"), %(src="/admin/dashboards/content/cards/posts?status=draft")
 
     get_frame "/admin/dashboards/content/cards/posts?status=draft", "pu-dashboard-card-posts"
@@ -250,6 +251,11 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
 
     get_frame "/admin/dashboards/content/cards/posts?status=bogus", "pu-dashboard-card-posts"
     assert_match(/pu-metric-value[^>]*>3</, response.body, "an unknown value reads as the default")
+  end
+
+  test "a filter link keeps the page's other query parameters" do
+    get "/admin/dashboards/content", params: {status: "draft", tab: "x"}
+    assert_select %(nav[data-dashboard-filter="status"] a[href="/admin/dashboards/content?status=published&tab=x"])
   end
 
   test "toolbar links render when their condition passes" do

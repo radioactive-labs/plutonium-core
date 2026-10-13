@@ -38,7 +38,7 @@ module Plutonium
           current = dashboard.filter_value(filter.key)
           nav(class: "pu-dashboard-filter inline-flex rounded-[var(--pu-radius-md)] border border-[var(--pu-border)] p-0.5",
             aria: {label: filter.label}, data: {dashboard_filter: filter.key}) do
-            filter.choices.each do |value, label|
+            filter.choices.each_key do |value|
               selected = value == current
               a(
                 href: filter_url(filter, value),
@@ -47,7 +47,7 @@ module Plutonium
                   selected ? "bg-[var(--pu-surface-alt)] font-medium text-[var(--pu-text)]" : "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)]"
                 ),
                 aria: {current: selected ? "true" : nil}
-              ) { label }
+              ) { filter.choice_label(value) }
             end
           end
         end
@@ -59,9 +59,10 @@ module Plutonium
           end
         end
 
-        # The page with this filter set and every other filter kept.
+        # The page with this filter set and the rest of the query string kept.
         def filter_url(filter, value)
-          "#{dashboard.request.path}?#{dashboard.filter_values.merge(filter.key => value).to_query}"
+          query = dashboard.request.query_parameters.merge(filter.key.to_s => value)
+          "#{dashboard.request.path}?#{query.to_query}"
         end
       end
     end

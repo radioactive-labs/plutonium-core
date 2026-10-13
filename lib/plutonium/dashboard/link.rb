@@ -5,6 +5,8 @@ module Plutonium
     # A link in the dashboard's toolbar, declared with `link`: the way to a
     # related page such as the dashboard's settings or a full report.
     class Link
+      include Evaluation
+
       attr_reader :key, :icon
 
       def initialize(key, href:, label: nil, icon: nil, condition: nil)
@@ -19,19 +21,14 @@ module Plutonium
         Plutonium::Translation.resolve(@label) || key.to_s.humanize
       end
 
-      # Evaluated like a card's `href:`: a proc runs on the dashboard instance.
+      # Evaluated like a card's `href:`.
       def href_for(dashboard)
-        @href.is_a?(Proc) ? dashboard.instance_exec(&@href) : @href
+        @href.is_a?(Proc) ? evaluate_on(dashboard, @href) : @href
       end
 
-      # Like a card's `condition:`: a proc on the instance or a method name.
+      # Evaluated like a card's `condition:`.
       def visible?(dashboard)
-        case @condition
-        when nil then true
-        when Symbol then dashboard.send(@condition) ? true : false
-        when Proc then dashboard.instance_exec(&@condition) ? true : false
-        else @condition ? true : false
-        end
+        condition_passes?(dashboard, @condition)
       end
     end
   end

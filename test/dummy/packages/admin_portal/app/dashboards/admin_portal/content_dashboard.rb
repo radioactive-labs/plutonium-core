@@ -5,7 +5,7 @@ module AdminPortal
     presents label: "Content", description: "What the blog is publishing", icon: Phlex::TablerIcons::Article
 
     filter :status, choices: {"all" => "All posts", "published" => "Published", "draft" => "Drafts"}, default: "all"
-    link :posts, label: "All posts", icon: Phlex::TablerIcons::FileText, href: -> { resource_url_for(::Blogging::Post, parent: nil) }
+    link :posts, label: "All posts", icon: Phlex::TablerIcons::FileText, href: ->(d) { d.resource_url_for(::Blogging::Post, parent: nil) }
     link :hidden, href: "/nowhere", condition: -> { false }
 
     metric(:posts, span: 4, icon: Phlex::TablerIcons::FileText, href: -> { resource_url_for(::Blogging::Post, parent: nil) }) do

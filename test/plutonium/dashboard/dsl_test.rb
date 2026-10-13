@@ -275,6 +275,32 @@ module Plutonium
         assert_equal "/settings/us", dashboard.visible_links.first.href_for(dashboard)
       end
 
+      def test_link_procs_may_take_the_dashboard_as_an_argument
+        klass = Class.new(Plutonium::Dashboard::Base) do
+          link :report, href: ->(d) { "/report/#{d.filter_value(:region)}" }, condition: ->(d) { d.filter_value(:region) == "us" }
+          filter :region, choices: {"eu" => "Europe", "us" => "Americas"}
+        end
+
+        us = klass.new(ParamsViewContext.new(region: "us"))
+        assert_equal [:report], us.visible_links.map(&:key)
+        assert_equal "/report/us", us.visible_links.first.href_for(us)
+        assert_empty klass.new(ParamsViewContext.new(region: "eu")).visible_links
+      end
+
+      def test_filter_choice_labels_resolve_lazy_procs
+        filter = Plutonium::Dashboard::Filter.new(:period, choices: {"7" => -> { "Last week" }, "30" => "Last month"})
+
+        assert_equal "Last week", filter.choice_label("7")
+        assert_equal "Last month", filter.choice_label("30")
+      end
+
+      def test_filter_keys_reserved_by_the_card_route_are_refused
+        klass = Class.new(Plutonium::Dashboard::Base)
+        %i[card format anchor host script_name dashboard_class].each do |key|
+          assert_raises(ArgumentError, key.inspect) { klass.filter(key, choices: {"x" => "X"}) }
+        end
+      end
+
       def test_filter_declarations_are_validated
         klass = Class.new(Plutonium::Dashboard::Base)
         assert_raises(ArgumentError) { klass.filter(:a, choices: {}) }

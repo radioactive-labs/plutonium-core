@@ -118,4 +118,17 @@ class Plutonium::UI::Dashboard::MetricTest < ActiveSupport::TestCase
     assert_match(/from 12 ratings/, html)
     refute_match(/<svg/, html)
   end
+
+  test "an explicit trend with a caption and no change keeps its icon" do
+    html = render_metric { {value: 3, trend: :up, change_label: "vs last week"} }
+    assert_match(/<svg/, html)
+    assert_match(/pu-metric-change-positive/, html)
+  end
+
+  test "a zero previous with a caption shows a neutral dash" do
+    html = render_metric { {value: 3, previous: 0, change_label: "vs. nothing"} }
+    assert_match(/pu-metric-change-neutral/, html)
+    assert_match(/<svg/, html)
+    refute_match(/%</, html)
+  end
 end

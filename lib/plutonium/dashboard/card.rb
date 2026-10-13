@@ -9,6 +9,8 @@ module Plutonium
     # Built by {DSL} at class-load and frozen; everything request-dependent
     # (label translation, `condition:`, `href:`) is resolved per render.
     class Card
+      include Evaluation
+
       KINDS = %i[metric chart custom].freeze
 
       # The dashboard grid is 12 columns wide, so halves, thirds and quarters
@@ -90,14 +92,7 @@ module Plutonium
       # the page AND the card endpoint, so a hidden card cannot be fetched
       # directly.
       def visible?(dashboard)
-        return true if condition.nil?
-
-        result = case condition
-        when Symbol then dashboard.send(condition)
-        when Proc then evaluate_on(dashboard, condition)
-        else condition
-        end
-        result ? true : false
+        condition_passes?(dashboard, condition)
       end
 
       # The card's link target for this request, if any.
@@ -137,10 +132,6 @@ module Plutonium
       end
 
       private
-
-      def evaluate_on(dashboard, callable)
-        callable.arity.zero? ? dashboard.instance_exec(&callable) : dashboard.instance_exec(dashboard, &callable)
-      end
 
       def validate_span!(span)
         return GRID_COLUMNS if span == :full

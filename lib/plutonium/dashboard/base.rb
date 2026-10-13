@@ -95,14 +95,13 @@ module Plutonium
       # A filter's chosen value for this request, or its default.
       # @raise [ArgumentError] when the dashboard declares no such filter
       def filter_value(key)
-        filter = self.class.find_filter(key) || raise(ArgumentError, "#{self.class.name} declares no filter #{key.inspect}")
-        filter.value_from(params)
+        filter_values.fetch(key.to_sym) { raise ArgumentError, "#{self.class.name} declares no filter #{key.inspect}" }
       end
 
       # Every filter's chosen value, keyed by filter: what the page carries
-      # onto each card's frame URL.
+      # onto each card's frame URL. Read once per request.
       def filter_values
-        self.class.filters.to_h { |filter| [filter.key, filter.value_from(params)] }
+        @filter_values ||= self.class.filters.to_h { |filter| [filter.key, filter.value_from(params)] }.freeze
       end
 
       # The toolbar links whose `condition:` passes for this request.

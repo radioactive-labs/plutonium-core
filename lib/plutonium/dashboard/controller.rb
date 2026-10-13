@@ -31,6 +31,7 @@ module Plutonium
       # GET the mount — the full page.
       def show
         authorize_dashboard!
+        ensure_filters_clear_of_entity_param!
         set_page_title(current_dashboard_class.label)
         render Plutonium::UI::Page::Dashboard.new(dashboard: current_dashboard)
       end
@@ -38,6 +39,7 @@ module Plutonium
       # GET <mount>/cards/:card — one card, wrapped in its turbo frame.
       def card
         authorize_dashboard!
+        ensure_filters_clear_of_entity_param!
         card = current_dashboard.visible_card!(params[:card])
         render Plutonium::UI::Dashboard::Frame.new(dashboard: current_dashboard, card:)
       end
@@ -75,6 +77,16 @@ module Plutonium
           :authorize?,
           Plutonium::Dashboard::AuthorizationDeniedResult.new(I18n.t("plutonium.dashboard.authorization_denied"))
         )
+      end
+
+      # The tenant's param key belongs to the engine, so it cannot be refused
+      # when the filter is declared. A filter under that key would read the
+      # tenant id and be overwritten on every card's frame URL.
+      def ensure_filters_clear_of_entity_param!
+        return unless scoped_to_entity? && current_dashboard_class.find_filter(scoped_entity_param_key)
+
+        raise ArgumentError,
+          "#{current_dashboard_class.name} filter #{scoped_entity_param_key.inspect} collides with the portal's entity param, pick another name"
       end
 
       # The card endpoint's path, threading the entity scope segment through so

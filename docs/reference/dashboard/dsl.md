@@ -40,10 +40,11 @@ filter :period, choices: {"7" => "Last 7 days", "30" => "Last 30 days", "90" => 
 metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..).count }
 ```
 
-- `choices:` maps each value to its label, in display order. `default:` must be one of the values and is the first when omitted.
+- `choices:` maps each value to its label (a string or a lazy `t` proc), in display order. `default:` must be one of the values and is the first when omitted.
+- The key cannot be one the card route uses (`card`, `format`, `anchor`, `host`, ...) or the portal's entity param; both raise.
 - The value comes from the query string under the filter's key. A value that is not one of the choices reads as the default.
 - Every lazy card's frame URL carries every filter's value, so a card's own request reads what the page read.
-- The page renders each filter as a segmented row of links above the cards, so a choice is a URL that survives a reload and can be shared.
+- The page renders each filter as a segmented row of links above the cards, so a choice is a URL that survives a reload and can be shared. Other query parameters on the page are kept.
 
 ### link(key, href:, label: nil, icon: nil, condition: nil)
 
@@ -94,8 +95,8 @@ The block returns a value or a hash.
 | Hash key | Meaning |
 |---|---|
 | `value` | The number or string. `nil` renders `plutonium.dashboard.metric.empty` |
-| `previous` | Computes `change` from this value: a percentage of it, or the difference with `change_unit: :points`. A zero previous yields no percentage |
-| `change` | Numeric percentage points (`2.5` → `+2.5%`) or a string shown as-is |
+| `previous` | Computes `change` from this value: a percentage of it, or the difference with `change_unit: :points`. A zero previous yields no change (a neutral dash when there is a caption) |
+| `change` | A number (`2.5` → `+2.5%`, or `+2.5 pts` with `change_unit: :points`) or a string shown as-is |
 | `trend` | `:up`, `:down`, `:flat`; inferred from the sign of `change` |
 | `change_label` | Caption after the change |
 
