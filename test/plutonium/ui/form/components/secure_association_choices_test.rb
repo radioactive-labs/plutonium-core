@@ -136,9 +136,9 @@ class Plutonium::UI::Form::Components::SecureAssociationChoicesTest < ActiveSupp
   end
 
   # A selected record past a cap would not render and be dropped on save.
-  test "list variants render every choice unless choice_limit is passed" do
+  test "list variants are capped like the select unless choice_limit is passed" do
     component = form_field(@user, :organizations).component_for(:association_checkboxes)
-    assert_nil component.instance_variable_get(:@choice_limit)
+    assert_equal Plutonium::UI::Form::Components::SecureAssociation::DEFAULT_CHOICE_LIMIT, component.instance_variable_get(:@choice_limit)
 
     capped = form_field(@user, :organizations).component_for(:association_checkboxes, choice_limit: 1)
     assert_equal 1, capped.instance_variable_get(:@choice_limit)

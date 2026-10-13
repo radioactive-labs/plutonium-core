@@ -60,10 +60,6 @@ module Plutonium
           def association_name = "#{field.object.class.name}##{association_reflection.name}"
 
           def build_attributes
-            # No default cap: a selected record past the limit would not render,
-            # so saving the form would silently drop it. Pass `choice_limit:` to
-            # opt back in.
-            attributes[:choice_limit] = nil unless attributes.key?(:choice_limit)
             super
             if @group_method
               raise ArgumentError, "#{self.class.name.demodulize} does not support group_method: (#{association_name})."
@@ -74,9 +70,9 @@ module Plutonium
             @typeahead_option = false
           end
 
-          # A capped list still renders the selected records past the cap:
-          # an unrendered checkbox is not submitted, so saving the form would
-          # drop it.
+          # Capped like the select (`choice_limit:`, DEFAULT_CHOICE_LIMIT by
+          # default), but the selected records always render: an unrendered
+          # checkbox is not submitted, so saving the form would drop it.
           def choices
             @choices ||= begin
               collection = @raw_choices || authorized_relation
@@ -98,8 +94,6 @@ module Plutonium
               p(class: "pu-hint") { Plutonium::Translation.t("plutonium.ui.form.association_choices.empty") }
               return
             end
-
-            warn_about_long_list
 
             choices.each.with_index do |(value, text), index|
               render_choice(value:, text:, id: "#{attributes[:id]}_#{index}", checked: selected?(value))
@@ -131,17 +125,6 @@ module Plutonium
           end
 
           def singular? = %i[belongs_to has_one].include?(association_reflection.macro)
-
-          # These lists have no default cap, so flag one long enough to need a
-          # select with typeahead instead.
-          def warn_about_long_list
-            return if @choice_limit || choices.values.size <= DEFAULT_CHOICE_LIMIT
-
-            Rails.logger.warn {
-              "#{self.class.name.demodulize} for #{association_name} rendered #{choices.values.size} choices; " \
-                "use the association select for long lists"
-            }
-          end
 
           def render_hidden_input
           end

@@ -324,7 +324,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `uppy_tag` / `file_tag` | Uppy file upload |
 | `secure_association_tag` | Association with policy-checked options |
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
-| `association_checkboxes_tag` / `association_toggles_tag` | has_many / habtm as checkboxes or switches (`as: :association_checkboxes` / `:association_toggles`); same policy scoping and SGID validation as the select, renders every option (no default `choice_limit`) |
+| `association_checkboxes_tag` / `association_toggles_tag` | has_many / habtm as checkboxes or switches (`as: :association_checkboxes` / `:association_toggles`); same policy scoping and SGID validation as the select, capped by `choice_limit:` like the select (selected records always render), no typeahead |
 | `association_radio_buttons_tag` | belongs_to / has_one as a radio group (`as: :association_radio_buttons`); optional associations get a "None" choice |
 | `key_value_store_tag` | Key/value pairs editor |
 | `currency_tag` | Money input (number field + unit prefix) |

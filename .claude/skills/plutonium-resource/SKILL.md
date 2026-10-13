@@ -622,7 +622,7 @@ end
 
 - `input :tag_ids` uses Rails' collection-ids setter. Permit `:tag_ids`; values are plain ids. Simplest for a scoped checkbox list.
 - `input :tags, as: :secure_association` is the native picker. It sets input_param `tag_sgids`, scopes via `choices:` (or the target policy), and validates submitted SGIDs by decoded model-id.
-- `input :tags, as: :association_checkboxes` (or `:association_toggles`) is the same picker rendered as one checkbox/switch per record. `input :category, as: :association_radio_buttons` does the same for a belongs_to/has_one. They render every option, so keep them to short lists.
+- `input :tags, as: :association_checkboxes` (or `:association_toggles`) is the same picker rendered as one checkbox/switch per record. `input :category, as: :association_radio_buttons` does the same for a belongs_to/has_one. They are capped by `choice_limit:` like the select but have no typeahead, so keep them to short lists.
 
 ⚠️ Do **not** hand-roll `collection_checkboxes_tag(choices: [[label, record.to_sgid.to_s]])`. SGIDs are non-deterministic (`to_sgid` embeds a timestamp), the component re-derives `choices` at submit and intersects the posted value against the freshly-minted SGIDs, so it never matches and the value is dropped. Use stable ids in custom checkboxes, or `as: :association_checkboxes` (which validates by model-id).
 
