@@ -147,6 +147,16 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
     assert_equal false, component.instance_variable_get(:@add_action)
   end
 
+  # The select's blank option posts "", which has to survive resource_params'
+  # `compact` to clear the association.
+  def test_a_blank_select_clears_a_singular_association
+    component = Plutonium::UI::Form::Base.new(KitchenSink.new).field(:user)
+      .component_for(:belongs_to, skip_authorization: true, add_action: false)
+
+    assert_equal({user_sgid: ""}, component.extract_input({user: ""}))
+    assert_equal({user_sgid: nil}, component.extract_input({}))
+  end
+
   private
 
   # Lightweight build for normalize_simple_input tests — only what that

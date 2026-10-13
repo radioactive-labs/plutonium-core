@@ -349,10 +349,10 @@ The variants share the select's security: options come from the target's policy 
 
 How they differ from the select:
 
-- **Every option renders.** There is no typeahead and no default `choice_limit`, because a selected record left out of the list would be removed when the form is saved. Use them for short lists. Passing `choice_limit:` turns the cap back on.
+- **Every option renders.** There is no typeahead and no default `choice_limit`, so use them for short lists; a list longer than the select's default cap logs a warning. Passing `choice_limit:` turns the cap back on, and the selected records still render past it so saving the form keeps them.
 - **Unchecking everything clears the association.** The checkbox list submits a blank value, so an empty selection saves as no records.
-- **Optional radio groups get a "None" choice.** A radio group can't be cleared otherwise. It is left out when the field is required; force it either way with `include_blank: true/false`. Its label is the field's `placeholder:` if set.
-- **The macro has to fit.** Checkboxes and toggles take a has_many or habtm; radio buttons take a belongs_to or has_one. A mismatch raises `ArgumentError` when the form renders. Polymorphic associations are not supported.
+- **Optional radio groups get a "None" choice.** A radio group can't be cleared otherwise. Picking it clears the association. It is left out when the field is required (a checked "None" would satisfy the browser's `required`), and `include_blank: false` drops it on an optional one. Its label is the field's `placeholder:` if set.
+- **The macro has to fit.** Checkboxes and toggles take a has_many or habtm; radio buttons take a belongs_to or has_one. A mismatch raises `ArgumentError` when the form renders, as do a polymorphic association and `group_method:`.
 
 The list and its controls are themed by `association_checkboxes`, `association_toggles`, `association_radio_buttons` (the list), `association_checkbox`, `association_toggle`, `association_radio_button` (each control) and `association_choice_label`.
 

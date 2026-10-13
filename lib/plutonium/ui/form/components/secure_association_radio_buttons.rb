@@ -9,7 +9,8 @@ module Plutonium
         #
         # An optional association also gets a blank "None" choice, since a
         # radio group can't otherwise be cleared once something is picked.
-        # Override with `include_blank: true/false`.
+        # `include_blank: false` drops it. A required association never gets
+        # one: a checked "None" would satisfy the group's `required`.
         class SecureAssociationRadioButtons < SecureAssociationChoices
           protected
 
@@ -22,9 +23,9 @@ module Plutonium
           def group_role = "radiogroup"
 
           def include_blank?
-            return @include_blank unless @include_blank.nil?
+            return false if attributes[:required]
 
-            !attributes[:required]
+            @include_blank != false
           end
 
           # `required` on any radio in a group makes picking one of them required.

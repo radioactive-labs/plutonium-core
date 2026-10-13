@@ -49,10 +49,15 @@ module Plutonium
             unless supported_macros.include?(association_reflection.macro)
               raise ArgumentError,
                 "#{self.class.name.demodulize} does not support #{association_reflection.macro} " \
-                "associations (#{field.object.class.name}##{association_reflection.name}). " \
-                "Supported: #{supported_macros.join(", ")}."
+                "associations (#{association_name}). Supported: #{supported_macros.join(", ")}."
+            end
+
+            if association_reflection.polymorphic?
+              raise ArgumentError, "#{self.class.name.demodulize} does not support polymorphic associations (#{association_name})."
             end
           end
+
+          def association_name = "#{field.object.class.name}##{association_reflection.name}"
 
           def build_attributes
             # No default cap: a selected record past the limit would not render,
@@ -60,9 +65,32 @@ module Plutonium
             # opt back in.
             attributes[:choice_limit] = nil unless attributes.key?(:choice_limit)
             super
+            if @group_method
+              raise ArgumentError, "#{self.class.name.demodulize} does not support group_method: (#{association_name})."
+            end
+
             # Typeahead drives a slim-select dropdown; a rendered list has no
             # search box to wire it to.
             @typeahead_option = false
+          end
+
+          # A capped list still renders the selected records past the cap:
+          # an unrendered checkbox is not submitted, so saving the form would
+          # drop it.
+          def choices
+            @choices ||= begin
+              collection = @raw_choices || authorized_relation
+              if @choice_limit && collection.respond_to?(:limit)
+                collection = (collection.limit(@choice_limit).to_a + collection.where(id: selected_record_ids).to_a).uniq
+              end
+              build_choice_mapper(collection)
+            end
+          end
+
+          # Every option renders, so compare against the selection once per
+          # option instead of re-parsing it for every selected record.
+          def selected?(option)
+            selected_gids.include?(SignedGlobalID.parse(option)&.uri&.to_s)
           end
 
           def render_choices
@@ -70,6 +98,8 @@ module Plutonium
               p(class: "pu-hint") { Plutonium::Translation.t("plutonium.ui.form.association_choices.empty") }
               return
             end
+
+            warn_about_long_list
 
             choices.each.with_index do |(value, text), index|
               render_choice(value:, text:, id: "#{attributes[:id]}_#{index}", checked: selected?(value))
@@ -90,6 +120,27 @@ module Plutonium
               )
               span { text }
             end
+          end
+
+          def selected_gids
+            @selected_gids ||= Array(singular? ? singular_field_value : collection_field_value).compact.to_set { |sgid| sgid.uri.to_s }
+          end
+
+          def selected_record_ids
+            Array(field.object.public_send(association_reflection.name)).map(&:id)
+          end
+
+          def singular? = %i[belongs_to has_one].include?(association_reflection.macro)
+
+          # These lists have no default cap, so flag one long enough to need a
+          # select with typeahead instead.
+          def warn_about_long_list
+            return if @choice_limit || choices.values.size <= DEFAULT_CHOICE_LIMIT
+
+            Rails.logger.warn {
+              "#{self.class.name.demodulize} for #{association_name} rendered #{choices.values.size} choices; " \
+                "use the association select for long lists"
+            }
           end
 
           def render_hidden_input

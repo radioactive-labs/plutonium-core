@@ -166,6 +166,12 @@ module Plutonium
           # not include records reachable via typeahead). For explicit
           # `@raw_choices`, fall back to membership in the rendered list.
           def normalize_simple_input(input_value)
+            # An explicit blank (the select's blank option, a "None" radio)
+            # clears a singular association: "" survives resource_params'
+            # `compact` and `<name>_sgid = ""` locates nil. A field that was not
+            # submitted arrives as nil and is left alone.
+            return "" if input_value == "" && !attributes[:multiple]
+
             sgid = SignedGlobalID.parse(input_value.presence)
             return nil unless sgid
 

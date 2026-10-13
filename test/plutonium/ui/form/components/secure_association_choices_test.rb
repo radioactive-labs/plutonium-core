@@ -114,6 +114,23 @@ class Plutonium::UI::Form::Components::SecureAssociationChoicesTest < ActiveSupp
     assert html.css("input[type=radio]").all? { |radio| radio["required"] }
   end
 
+  test "picking None clears the association, a missing param leaves it" do
+    component = form_field(KitchenSink.new(user: @user), :user).component_for(:association_radio_buttons, skip_authorization: true, add_action: false)
+
+    assert_equal({user_sgid: ""}, component.extract_input({user: ""}))
+    assert_equal({user_sgid: nil}, component.extract_input({}))
+
+    record = KitchenSink.new(user: @user)
+    record.user_sgid = ""
+    assert_nil record.user
+  end
+
+  test "a required association ignores include_blank: true" do
+    html = render_input(KitchenSink.new, :user, :association_radio_buttons, required: true, include_blank: true)
+
+    assert_nil html.at_css("input[type=radio][value='']")
+  end
+
   test "include_blank: false drops the None choice" do
     assert_nil render_input(KitchenSink.new, :user, :association_radio_buttons, include_blank: false).at_css("input[type=radio][value='']")
   end
@@ -125,6 +142,16 @@ class Plutonium::UI::Form::Components::SecureAssociationChoicesTest < ActiveSupp
 
     capped = form_field(@user, :organizations).component_for(:association_checkboxes, choice_limit: 1)
     assert_equal 1, capped.instance_variable_get(:@choice_limit)
+  end
+
+  test "a capped list still renders the selected records past the cap" do
+    @user.organizations << @globex
+    html = render_input(@user, :organizations, :association_checkboxes, choices: nil, choice_limit: 1)
+    rendered = html.css("input[type=checkbox]").map { |box| SignedGlobalID.parse(box["value"]).model_id }
+    checked = html.css("input[type=checkbox][checked]").map { |box| SignedGlobalID.parse(box["value"]).model_id }
+
+    assert_includes rendered, @globex.id.to_s
+    assert_equal [@globex.id.to_s], checked
   end
 
   test "an empty choice list says so" do
@@ -141,6 +168,18 @@ class Plutonium::UI::Form::Components::SecureAssociationChoicesTest < ActiveSupp
 
   test "radio buttons reject a collection association" do
     assert_raises(ArgumentError) { form_field(@user, :organizations).component_for(:association_radio_buttons) }
+  end
+
+  test "list variants reject a polymorphic association" do
+    error = assert_raises(ArgumentError) { form_field(Comment.new, :commentable).component_for(:association_radio_buttons) }
+
+    assert_includes error.message, "polymorphic"
+  end
+
+  test "list variants reject group_method" do
+    error = assert_raises(ArgumentError) { form_field(@user, :organizations).component_for(:association_checkboxes, group_method: :name) }
+
+    assert_includes error.message, "group_method"
   end
 
   test "builder aliases" do
