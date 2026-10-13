@@ -37,6 +37,18 @@ class OrgPortal::DashboardTest < ActionDispatch::IntegrationTest
     assert_match(/<p>Acme Corp<\/p>/, response.body)
   end
 
+  # The tenant segment belongs to the route: a filter under its key would read
+  # the tenant id and overwrite it on every card's frame URL.
+  test "a filter named after a path segment is refused" do
+    key = OrgPortal::Engine.scoped_entity_param_key
+    TeamDashboard.filter(key, choices: {"x" => "X"})
+
+    error = assert_raises(ArgumentError) { get base }
+    assert_includes error.message, "path segment"
+  ensure
+    TeamDashboard.filters.reject! { |filter| filter.key == key }
+  end
+
   test "another tenant's dashboard is not reachable" do
     other = create_organization!
     get "/org/#{other.to_param}/team"

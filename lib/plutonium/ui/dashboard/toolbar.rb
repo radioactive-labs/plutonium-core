@@ -21,7 +21,7 @@ module Plutonium
               dashboard.class.filters.each { |filter| render_filter(filter) }
             end
             div(class: "flex flex-wrap items-center gap-2") do
-              links.each { |link| render_link(link) }
+              links.each { |link, href| render_link(link, href) }
             end
           end
         end
@@ -30,15 +30,21 @@ module Plutonium
 
         attr_reader :dashboard
 
+        # Visible links paired with their href. A link whose `href:` resolves
+        # to nil (a proc that returns nothing for this user) is left out
+        # rather than rendered as a dead button.
         def links
-          @links ||= dashboard.visible_links
+          @links ||= dashboard.visible_links.filter_map do |link|
+            href = link.href_for(dashboard)
+            [link, href] if href.present?
+          end
         end
 
         def render_filter(filter)
           current = dashboard.filter_value(filter.key)
           nav(class: "pu-dashboard-filter inline-flex rounded-[var(--pu-radius-md)] border border-[var(--pu-border)] p-0.5",
             aria: {label: filter.label}, data: {dashboard_filter: filter.key}) do
-            filter.choices.each_key do |value|
+            dashboard.filter_choices(filter).each do |value, label|
               selected = value == current
               a(
                 href: filter_url(filter, value),
@@ -47,13 +53,13 @@ module Plutonium
                   selected ? "bg-[var(--pu-surface-alt)] font-medium text-[var(--pu-text)]" : "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)]"
                 ),
                 aria: {current: selected ? "true" : nil}
-              ) { filter.choice_label(value) }
+              ) { Plutonium::Translation.resolve(label) }
             end
           end
         end
 
-        def render_link(link)
-          a(href: link.href_for(dashboard), class: "pu-btn pu-btn-sm pu-btn-outline", data: {dashboard_link: link.key}) do
+        def render_link(link, href)
+          a(href:, class: "pu-btn pu-btn-sm pu-btn-outline", data: {dashboard_link: link.key}) do
             render link.icon.new(class: "size-4") if link.icon
             span { link.label }
           end

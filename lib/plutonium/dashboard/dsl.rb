@@ -65,11 +65,18 @@ module Plutonium
         #
         #   filter :period, choices: {"7" => "Last 7 days", "30" => "Last 30 days"}, default: "30"
         #   metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..).count }
-        def filter(key, choices:, default: nil, label: nil)
+        #
+        # `scopes:` takes a resource instead of choices: "All" plus the scopes
+        # its definition declares. `filtered(Post)` then counts what the index
+        # would list, and `filtered_url(Post)` opens that list.
+        #
+        #   filter :status, scopes: Post
+        #   metric(:posts, href: -> { filtered_url(Post) }) { filtered(Post).count }
+        def filter(key, choices: nil, scopes: nil, default: nil, label: nil)
           key = key.to_sym
           raise ArgumentError, "#{name || "dashboard"} already declares a filter #{key.inspect}" if find_filter(key)
 
-          filters << Filter.new(key, choices:, default:, label:)
+          filters << Filter.new(key, choices:, scopes:, default:, label:)
           filters.last
         end
 

@@ -109,6 +109,18 @@ class Plutonium::UI::Dashboard::MetricTest < ActiveSupport::TestCase
     assert_match(/>-2\.5 pts</, html)
   end
 
+  test "a points change from zero still shows the difference" do
+    html = render_metric(format: :percentage, change_unit: :points) { {value: 40.0, previous: 0.0} }
+    assert_match(/>\+40 pts</, html)
+  end
+
+  test "float noise in a change reads as no change" do
+    html = render_metric(change_unit: :points) { {value: 0.3, previous: 0.1 + 0.2} }
+    assert_match(/pu-metric-change-neutral/, html)
+    assert_match(/>0 pts</, html)
+    refute_match(/>-0/, html)
+  end
+
   test "an unknown change_unit is refused" do
     assert_raises(ArgumentError) { render_metric(change_unit: :basis_points) { 1 } }
   end

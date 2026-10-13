@@ -39,8 +39,13 @@ module Plutonium
             data[:change] = points? ? data[:value] - data[:previous] : percent_change(data[:value], data[:previous])
           end
 
-          # A `previous` of zero leaves `change` nil but still sets the trend
-          # key, so a captioned row shows a neutral dash.
+          # Round to the precision the change is shown at, so float noise
+          # (0.3 against 0.1 + 0.2) reads as no change rather than "-0" heading
+          # down. `+ 0.0` turns a rounded -0.0 into 0.0.
+          data[:change] = data[:change].round(1) + 0.0 if data[:change].is_a?(Numeric)
+
+          # A `previous` of zero leaves a percent `change` nil but still sets
+          # the trend key, so a captioned row shows a neutral dash.
           data[:trend] ||= infer_trend(data[:change]) if data.key?(:change)
           data
         end

@@ -287,16 +287,43 @@ module Plutonium
         assert_empty klass.new(ParamsViewContext.new(region: "eu")).visible_links
       end
 
-      def test_filter_choice_labels_resolve_lazy_procs
-        filter = Plutonium::Dashboard::Filter.new(:period, choices: {"7" => -> { "Last week" }, "30" => "Last month"})
+      class ScopedDashboard < Plutonium::Dashboard::Base
+        filter :status, scopes: ::Blogging::Post
+      end
 
-        assert_equal "Last week", filter.choice_label("7")
-        assert_equal "Last month", filter.choice_label("30")
+      class ScopeViewContext < ParamsViewContext
+        def resource_url_for(klass, parent:, **options) = [klass, options]
+      end
+
+      # A dashboard whose post definition has `default_scope :published`.
+      def scoped_dashboard(params)
+        dashboard = ScopedDashboard.new(ScopeViewContext.new(params))
+        definition = ::Blogging::PostDefinition.new
+        definition.define_singleton_method(:default_scope) { :published }
+        dashboard.instance_variable_set(:@resource_definitions, {::Blogging::Post => definition})
+        dashboard
+      end
+
+      def test_a_scope_filter_defaults_to_the_definitions_default_scope
+        assert_equal "published", scoped_dashboard({}).filter_value(:status)
+        assert_equal [::Blogging::Post, {q: {scope: "published"}}], scoped_dashboard({}).filtered_url(::Blogging::Post)
+      end
+
+      # Without an explicit blank the index would apply its default scope.
+      def test_filtered_url_sends_all_explicitly_over_a_default_scope
+        assert_equal [::Blogging::Post, {q: {scope: ""}}], scoped_dashboard(status: "all").filtered_url(::Blogging::Post)
+      end
+
+      def test_filter_needs_exactly_one_of_choices_or_scopes
+        assert_raises(ArgumentError) { Plutonium::Dashboard::Filter.new(:a) }
+        assert_raises(ArgumentError) { Plutonium::Dashboard::Filter.new(:a, choices: {"x" => "X"}, scopes: ::Blogging::Post) }
+        assert_raises(ArgumentError) { Plutonium::Dashboard::Filter.new(:a, scopes: "Blogging::Post") }
+        assert Plutonium::Dashboard::Filter.new(:a, scopes: ::Blogging::Post).scopes?
       end
 
       def test_filter_keys_reserved_by_the_card_route_are_refused
         klass = Class.new(Plutonium::Dashboard::Base)
-        %i[card format anchor host script_name dashboard_class].each do |key|
+        %i[card format anchor host script_name dashboard_class use_route _recall].each do |key|
           assert_raises(ArgumentError, key.inspect) { klass.filter(key, choices: {"x" => "X"}) }
         end
       end

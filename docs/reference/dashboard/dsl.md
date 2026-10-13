@@ -30,7 +30,7 @@ Default reload interval for every lazy card. `nil` (the default) disables it.
 
 Page width, one of `:sm`, `:md`, `:lg`, `:xl`, `:full`. Default `:full`.
 
-### filter(key, choices:, default: nil, label: nil)
+### filter(key, choices: nil, scopes: nil, default: nil, label: nil)
 
 A page-level control every card reads, such as a period or a region.
 
@@ -41,14 +41,30 @@ metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..
 ```
 
 - `choices:` maps each value to its label (a string or a lazy `t` proc), in display order. `default:` must be one of the values and is the first when omitted.
-- The key cannot be one the card route uses (`card`, `format`, `anchor`, `host`, ...) or the portal's entity param; both raise.
+- The key cannot be one the card route or `url_for` uses (`card`, `format`, `anchor`, `host`, `use_route`, ...), which raises when declared, or a path segment of the dashboard's route (the entity param on a path-scoped portal, a `(:locale)` scope), which raises on the request.
 - The value comes from the query string under the filter's key. A value that is not one of the choices reads as the default.
 - Every lazy card's frame URL carries every filter's value, so a card's own request reads what the page read.
 - The page renders each filter as a segmented row of links above the cards, so a choice is a URL that survives a reload and can be shared. Other query parameters on the page are kept.
+- A card's `href:` is not rewritten with the filter values. Use a scope filter (below) to link a card to the matching list.
+
+#### Scope filters
+
+`scopes:` takes a resource instead of `choices:`. The choices are "All" plus the scopes the resource's definition declares, labelled and gated (`condition:`) the way the index's scope pills are. The default is `default:`, else the definition's `default_scope`, else "All".
+
+```ruby
+filter :status, scopes: Post
+
+metric(:posts, href: -> { filtered_url(Post) }) { filtered(Post).count }
+chart(:by_author) { filtered(Post).group(:author_name).count }
+```
+
+- `filtered(Post)` is `authorized_resource_scope(Post)` with the chosen scope applied through the definition's own scope, the same code the index runs, so the card's number matches the list.
+- `filtered_url(Post)` is the Post index on that scope (`q[scope]=...`). With "All" chosen and a `default_scope` on the definition, it sends an explicit blank scope so the index shows everything.
+- Without a scope filter for the resource, `filtered` is the authorized scope as is and `filtered_url` the plain index.
 
 ### link(key, href:, label: nil, icon: nil, condition: nil)
 
-A button in the toolbar above the cards, such as the dashboard's settings or a full report. `href:` and `condition:` take the same forms as a card's and are evaluated on the dashboard instance.
+A button in the toolbar above the cards, such as the dashboard's settings or a full report. `href:` and `condition:` take the same forms as a card's and are evaluated on the dashboard instance. A link whose `href:` resolves to nil is left out.
 
 ```ruby
 link :settings, icon: Phlex::TablerIcons::Settings, href: -> { resource_url_for(Setting) },
@@ -95,7 +111,7 @@ The block returns a value or a hash.
 | Hash key | Meaning |
 |---|---|
 | `value` | The number or string. `nil` renders `plutonium.dashboard.metric.empty` |
-| `previous` | Computes `change` from this value: a percentage of it, or the difference with `change_unit: :points`. A zero previous yields no change (a neutral dash when there is a caption) |
+| `previous` | Computes `change` from this value: a percentage of it, or the difference with `change_unit: :points`. A zero previous yields no percentage (a neutral dash when there is a caption); with `:points` the difference still shows. The change is rounded to one decimal before its trend is read |
 | `change` | A number (`2.5` → `+2.5%`, or `+2.5 pts` with `change_unit: :points`) or a string shown as-is |
 | `trend` | `:up`, `:down`, `:flat`; inferred from the sign of `change` |
 | `change_label` | Caption after the change |
@@ -134,6 +150,8 @@ No kind-specific options. The block is `instance_exec`ed in `Plutonium::UI::Dash
 | `visible_cards` | Cards whose `condition:` passes |
 | `filter_value(key)` | The filter's value for this request, or its default |
 | `filter_values` | `{key => value}` for every filter; what each card's frame URL carries |
+| `filtered(resource_class)` | The authorized scope with the resource's scope filter applied |
+| `filtered_url(resource_class)` | The resource's index on the scope that filter has chosen |
 | `visible_links` | Toolbar links whose `condition:` passes |
 | `visible_card!(key)` | The card, or `Plutonium::Dashboard::UnknownCardError` (404) |
 | `refresh_for(card)` | The card's interval, else the dashboard's; `nil` for a card declared `refresh: false` |

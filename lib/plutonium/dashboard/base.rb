@@ -101,7 +101,47 @@ module Plutonium
       # Every filter's chosen value, keyed by filter: what the page carries
       # onto each card's frame URL. Read once per request.
       def filter_values
-        @filter_values ||= self.class.filters.to_h { |filter| [filter.key, filter.value_from(params)] }.freeze
+        @filter_values ||= self.class.filters.to_h { |filter| [filter.key, filter.value_from(self)] }.freeze
+      end
+
+      # A filter's value => label pairs for this request, built once.
+      def filter_choices(filter)
+        (@filter_choices ||= {})[filter.key] ||= filter.choices_for(self)
+      end
+
+      # The resource's authorized scope with the scope chosen by its
+      # `filter ..., scopes:` applied, through the definition's own scope, so
+      # a card's number matches the index list {#filtered_url} opens. Without
+      # such a filter, or with "All" chosen, the authorized scope as is.
+      def filtered(resource_class)
+        relation = authorized_resource_scope(resource_class)
+        name = chosen_scope(resource_class)
+        return relation unless name
+
+        body = resource_definition_for(resource_class).defined_scopes.fetch(name.to_sym)[:block] || name.to_sym
+        query = body.is_a?(Proc) ? Plutonium::Query::AdhocBlock.new(body) : Plutonium::Query::ModelScope.new(body)
+        query.apply(relation, context: controller)
+      end
+
+      # The resource's index, on the scope chosen by its `filter ..., scopes:`.
+      # "All" is sent explicitly when the definition has a `default_scope`, or
+      # the index would apply that instead.
+      def filtered_url(resource_class)
+        name = chosen_scope(resource_class)
+        scope = name || ("" if resource_definition_for(resource_class).default_scope)
+        options = scope.nil? ? {} : {q: {scope:}}
+        resource_url_for(resource_class, parent: nil, **options)
+      end
+
+      # The resource's definition in this dashboard's portal, falling back to
+      # the base one, as a resource controller resolves it.
+      def resource_definition_for(resource_class)
+        (@resource_definitions ||= {})[resource_class] ||= begin
+          package = (current_engine == Rails.application.class) ? nil : current_engine.module_parent
+          [package, "#{resource_class}Definition"].compact.join("::").constantize.new
+        rescue NameError
+          "#{resource_class}Definition".constantize.new
+        end
       end
 
       # The toolbar links whose `condition:` passes for this request.
@@ -122,6 +162,16 @@ module Plutonium
       def helpers = view_context
 
       private
+
+      # The scope name a `filter ..., scopes: resource_class` has chosen, or
+      # nil for "All" or when the dashboard has no such filter.
+      def chosen_scope(resource_class)
+        filter = self.class.filters.find { |candidate| candidate.resource_class == resource_class }
+        return unless filter
+
+        value = filter_value(filter.key)
+        value unless value == Filter::ALL
+      end
 
       def t(key, **options)
         Plutonium::Translation.t(key, **options)

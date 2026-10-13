@@ -91,7 +91,8 @@ metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..
 ```
 
 - A filter's value comes from the query string; an unknown value reads as the default. Read it with `filter_value(:key)`, never `params[:key]` directly.
-- Don't name a filter after a card-route param or `url_for` option (`card`, `format`, `anchor`, `host`, ...) or the portal's entity param; it raises.
+- Don't name a filter after a card-route param or `url_for` option (`card`, `format`, `anchor`, `host`, `use_route`, ...) or a path segment of the dashboard's route (entity param, `locale`); it raises.
+- To filter by a resource's scopes, use `filter :status, scopes: Post` (choices = "All" + the definition's scopes) with `filtered(Post)` in card blocks and `href: -> { filtered_url(Post) }`. Do not hand-map filter values to `where` clauses or `q[scope]` URLs; `filtered` runs the definition's scope, so the count matches the index.
 - Every lazy card's frame URL carries the filter values, so lazy cards see the page's choice. Do not hand-roll query forwarding or a custom `DashboardsController` for this.
 - Filters render as segmented links and links as buttons in a toolbar above the cards; neither needs a custom page class.
 

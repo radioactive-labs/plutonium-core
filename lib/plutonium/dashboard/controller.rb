@@ -31,7 +31,7 @@ module Plutonium
       # GET the mount — the full page.
       def show
         authorize_dashboard!
-        ensure_filters_clear_of_entity_param!
+        ensure_filters_clear_of_path_params!
         set_page_title(current_dashboard_class.label)
         render Plutonium::UI::Page::Dashboard.new(dashboard: current_dashboard)
       end
@@ -39,7 +39,7 @@ module Plutonium
       # GET <mount>/cards/:card — one card, wrapped in its turbo frame.
       def card
         authorize_dashboard!
-        ensure_filters_clear_of_entity_param!
+        ensure_filters_clear_of_path_params!
         card = current_dashboard.visible_card!(params[:card])
         render Plutonium::UI::Dashboard::Frame.new(dashboard: current_dashboard, card:)
       end
@@ -79,14 +79,17 @@ module Plutonium
         )
       end
 
-      # The tenant's param key belongs to the engine, so it cannot be refused
-      # when the filter is declared. A filter under that key would read the
-      # tenant id and be overwritten on every card's frame URL.
-      def ensure_filters_clear_of_entity_param!
-        return unless scoped_to_entity? && current_dashboard_class.find_filter(scoped_entity_param_key)
+      # A path segment of the mount (the tenant on a path-scoped portal, a
+      # `(:locale)` scope) belongs to the route, so it cannot be refused when
+      # the filter is declared. A filter under that key would read the
+      # segment's value and overwrite it on every card's frame URL.
+      def ensure_filters_clear_of_path_params!
+        segments = request.path_parameters.keys.map(&:to_sym) - %i[controller action]
+        collision = current_dashboard_class.filters.map(&:key) & segments
+        return if collision.empty?
 
         raise ArgumentError,
-          "#{current_dashboard_class.name} filter #{scoped_entity_param_key.inspect} collides with the portal's entity param, pick another name"
+          "#{current_dashboard_class.name} filter #{collision.first.inspect} collides with a path segment of the dashboard's route, pick another name"
       end
 
       # The card endpoint's path, threading the entity scope segment through so

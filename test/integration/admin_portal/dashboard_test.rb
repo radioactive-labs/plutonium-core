@@ -246,22 +246,22 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "a filter renders as links, reaches every card frame and scopes the cards" do
+  test "a scope filter offers All plus the definition's scopes, reaches every card frame and scopes the cards" do
     create_post!(status: :published)
     create_post!(status: :draft)
     create_post!(status: :draft)
 
     get "/admin/dashboards/content"
-    assert_match(%r{data-dashboard-filter="status"}, response.body)
+    assert_equal %w[All Published Drafts Archived], css_select(%(nav[data-dashboard-filter="status"] a)).map { |a| a.text.strip }
     assert_match(%r{href="/admin/dashboards/content\?status=published"}, response.body)
-    assert_select %(nav[data-dashboard-filter="status"] a[aria-current="true"]), count: 1, text: "All posts"
+    assert_select %(nav[data-dashboard-filter="status"] a[aria-current="true"]), count: 1, text: "All"
     assert_includes frame_tag("pu-dashboard-card-posts"), %(src="/admin/dashboards/content/cards/posts?status=all")
 
-    get "/admin/dashboards/content", params: {status: "draft"}
+    get "/admin/dashboards/content", params: {status: "drafts"}
     assert_select %(nav[data-dashboard-filter="status"] a[aria-current="true"]), count: 1, text: "Drafts"
-    assert_includes frame_tag("pu-dashboard-card-posts"), %(src="/admin/dashboards/content/cards/posts?status=draft")
+    assert_includes frame_tag("pu-dashboard-card-posts"), %(src="/admin/dashboards/content/cards/posts?status=drafts")
 
-    get_frame "/admin/dashboards/content/cards/posts?status=draft", "pu-dashboard-card-posts"
+    get_frame "/admin/dashboards/content/cards/posts?status=drafts", "pu-dashboard-card-posts"
     assert_match(/pu-metric-value[^>]*>2</, response.body)
 
     get_frame "/admin/dashboards/content/cards/posts?status=bogus", "pu-dashboard-card-posts"
@@ -269,7 +269,7 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
   end
 
   test "a filter link keeps the page's other query parameters" do
-    get "/admin/dashboards/content", params: {status: "draft", tab: "x"}
+    get "/admin/dashboards/content", params: {status: "drafts", tab: "x"}
     assert_select %(nav[data-dashboard-filter="status"] a[href="/admin/dashboards/content?status=published&tab=x"])
   end
 
@@ -277,6 +277,16 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     get "/admin/dashboards/content"
     assert_match(%r{<a[^>]*href="/admin/blogging/posts"[^>]*data-dashboard-link="posts"|<a[^>]*data-dashboard-link="posts"[^>]*href="/admin/blogging/posts"}, response.body)
     refute_includes response.body, %(data-dashboard-link="hidden")
+    refute_includes response.body, %(data-dashboard-link="no_href"), "a link whose href is nil is left out"
+  end
+
+  test "filtered_url opens the index on the chosen scope" do
+    get_frame "/admin/dashboards/content/cards/posts?status=drafts", "pu-dashboard-card-posts"
+    assert_includes response.body, %(href="/admin/blogging/posts?q%5Bscope%5D=drafts")
+
+    get_frame "/admin/dashboards/content/cards/posts?status=all", "pu-dashboard-card-posts"
+    assert_includes response.body, %(href="/admin/blogging/posts")
+    refute_includes response.body, "q%5Bscope%5D"
   end
 
   test "a dashboard with no filters or links renders no toolbar" do
