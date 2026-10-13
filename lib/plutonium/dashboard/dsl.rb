@@ -75,6 +75,9 @@ module Plutonium
         def filter(key, choices: nil, scopes: nil, default: nil, label: nil)
           key = key.to_sym
           raise ArgumentError, "#{name || "dashboard"} already declares a filter #{key.inspect}" if find_filter(key)
+          if scopes && filters.any? { |filter| filter.resource_class == scopes }
+            raise ArgumentError, "#{name || "dashboard"} already declares a scope filter for #{scopes}"
+          end
 
           filters << Filter.new(key, choices:, scopes:, default:, label:)
           filters.last

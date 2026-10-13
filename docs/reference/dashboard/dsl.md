@@ -49,7 +49,7 @@ metric(:orders) { orders.where(created_at: filter_value(:period).to_i.days.ago..
 
 #### Scope filters
 
-`scopes:` takes a resource instead of `choices:`. The choices are "All" plus the scopes the resource's definition declares, labelled and gated (`condition:`) the way the index's scope pills are. The default is `default:`, else the definition's `default_scope`, else "All".
+`scopes:` takes a resource instead of `choices:`. The choices are "All" plus the scopes the resource's definition declares, labelled and gated (`condition:`) the way the index's scope pills are. The default is `default:`, else the definition's `default_scope`, else "All". A default whose `condition:` hides it from the current user reads as "All" for that user.
 
 ```ruby
 filter :status, scopes: Post
@@ -61,6 +61,8 @@ chart(:by_author) { filtered(Post).group(:author_name).count }
 - `filtered(Post)` is `authorized_resource_scope(Post)` with the chosen scope applied through the definition's own scope, the same code the index runs, so the card's number matches the list.
 - `filtered_url(Post)` is the Post index on that scope (`q[scope]=...`). With "All" chosen and a `default_scope` on the definition, it sends an explicit blank scope so the index shows everything.
 - Without a scope filter for the resource, `filtered` is the authorized scope as is and `filtered_url` the plain index.
+- A scope's block runs against the dashboard's controller. `current_user`, `current_scoped_entity` and the portal's helpers work there; resource-controller helpers such as `current_parent` do not.
+- One scope filter per resource; a second raises when declared. A `default:` that is not one of the definition's scopes, or a definition scope named `:all` (the "All" choice's value), raises on the request.
 
 ### link(key, href:, label: nil, icon: nil, condition: nil)
 

@@ -36,6 +36,12 @@ module Plutonium
         Plutonium::Translation.label_for(:filter, resource_class, name) || name.to_s.humanize
       end
 
+      # Display label for a scope: the plutonium.scopes.<model>.<name>
+      # convention, else the humanized name.
+      def scope_label(name)
+        Plutonium::Translation.label_for(:scope, resource_class, name) || name.to_s.humanize
+      end
+
       def initialize(resource_class, params, request_path, &)
         @resource_class = resource_class
         @params = params

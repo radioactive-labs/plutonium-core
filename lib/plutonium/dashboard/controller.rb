@@ -82,9 +82,11 @@ module Plutonium
       # A path segment of the mount (the tenant on a path-scoped portal, a
       # `(:locale)` scope) belongs to the route, so it cannot be refused when
       # the filter is declared. A filter under that key would read the
-      # segment's value and overwrite it on every card's frame URL.
+      # segment's value and overwrite it on every card's frame URL. The card
+      # route's own segments count even when optional and absent from this
+      # request, since its URL helper would fill them.
       def ensure_filters_clear_of_path_params!
-        segments = request.path_parameters.keys.map(&:to_sym) - %i[controller action]
+        segments = (request.path_parameters.keys.map(&:to_sym) | dashboard_card_route.parts) - %i[controller action]
         collision = current_dashboard_class.filters.map(&:key) & segments
         return if collision.empty?
 
@@ -104,14 +106,13 @@ module Plutonium
       end
 
       def dashboard_card_route_helper
-        @dashboard_card_route_helper ||= begin
-          name = Plutonium::Dashboard::RouteResolution.route_name(
-            current_engine.routes, current_dashboard_class, action: "card"
-          )
-          raise "no register_dashboard route found for #{current_dashboard_class.name}" unless name
+        :"#{dashboard_card_route.name}_path"
+      end
 
-          :"#{name}_path"
-        end
+      def dashboard_card_route
+        @dashboard_card_route ||=
+          Plutonium::Dashboard::RouteResolution.route(current_engine.routes, current_dashboard_class, action: "card") ||
+          raise("no register_dashboard route found for #{current_dashboard_class.name}")
       end
     end
   end

@@ -53,7 +53,7 @@ module Plutonium
           raise ArgumentError, "filter #{@key.inspect}: choices must not be empty" if @choices.empty?
 
           @default ||= @choices.keys.first
-          validate_default!(@choices)
+          validate_default!
         end
       end
 
@@ -70,12 +70,19 @@ module Plutonium
         scopes? ? scope_choices(dashboard) : @choices
       end
 
+      # An explicit `default:` must be one of the definition's scopes. A
+      # default (explicit or the definition's `default_scope`) whose
+      # `condition:` hides it from this user reads as "All", as does a
+      # `default_scope` the definition never declares as a scope.
       def default_for(dashboard)
         return @default unless scopes?
 
-        default = @default || dashboard.resource_definition_for(resource_class).default_scope&.to_s || ALL
-        validate_default!(dashboard.filter_choices(self), default)
-        default
+        if @default && !dashboard.scope_query_for(resource_class).scope_definitions.key?(@default)
+          raise ArgumentError, "filter #{key.inspect}: default #{@default.inspect} is not a scope of #{resource_class}'s definition"
+        end
+
+        default = @default || dashboard.resource_definition_for(resource_class).default_scope&.to_s
+        dashboard.filter_choices(self).key?(default) ? default : ALL
       end
 
       # The chosen value for this request.
@@ -87,24 +94,20 @@ module Plutonium
       private
 
       def scope_choices(dashboard)
-        definition = dashboard.resource_definition_for(resource_class)
-        condition_context = Plutonium::Action::ConditionContext.new(dashboard.view_context, nil)
-        visible = definition.defined_scopes.select do |_name, config|
-          condition = config[:options][:condition]
-          condition.nil? || condition_context.instance_exec(&condition)
+        query = dashboard.scope_query_for(resource_class)
+        if query.scope_definitions.key?(ALL)
+          raise ArgumentError, "filter #{key.inspect}: #{resource_class}'s definition declares a scope named :#{ALL}, which is the filter's \"All\" choice"
         end
 
-        {ALL => -> { Plutonium::Translation.t("plutonium.ui.table.all") }}.merge(
-          visible.to_h do |name, _config|
-            [name.to_s, Plutonium::Translation.label_for(:scope, resource_class, name) || name.to_s.humanize]
-          end
-        )
+        visible = query.scope_definitions.keys.select { |name| query.scope_visible?(name, dashboard.view_context) }
+        {ALL => -> { Plutonium::Translation.t("plutonium.ui.table.all") }}
+          .merge(visible.to_h { |name| [name, query.scope_label(name)] })
       end
 
-      def validate_default!(choices, default = @default)
-        return if choices.key?(default)
+      def validate_default!
+        return if @choices.key?(@default)
 
-        raise ArgumentError, "filter #{key.inspect}: default #{default.inspect} is not one of #{choices.keys.inspect}"
+        raise ArgumentError, "filter #{key.inspect}: default #{@default.inspect} is not one of #{@choices.keys.inspect}"
       end
     end
   end
