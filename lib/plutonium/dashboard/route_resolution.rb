@@ -17,13 +17,17 @@ module Plutonium
       # @param action [String, Symbol] "show" or "card"
       # @return [Symbol, nil] the route name (e.g. :sales_dashboard_card)
       def route_name(route_set, dashboard_class, action:)
-        route = route_set.routes.find do |r|
+        route(route_set, dashboard_class, action:)&.name&.to_sym
+      end
+
+      # @return [ActionDispatch::Journey::Route, nil] the named route itself
+      def route(route_set, dashboard_class, action:)
+        route_set.routes.find do |r|
           d = r.defaults
           r.name.present? &&
             d[:action].to_s == action.to_s &&
             d[:dashboard_class].to_s == dashboard_class.name
         end
-        route&.name&.to_sym
       end
     end
   end

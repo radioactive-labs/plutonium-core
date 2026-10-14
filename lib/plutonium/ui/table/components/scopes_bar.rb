@@ -42,7 +42,7 @@ module Plutonium
           end
 
           def scope_label(name)
-            Plutonium::Translation.label_for(:scope, current_query_object.resource_class, name) || name.to_s.humanize
+            current_query_object.scope_label(name)
           end
 
           def current_scope

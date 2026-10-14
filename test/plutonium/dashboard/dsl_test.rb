@@ -287,16 +287,86 @@ module Plutonium
         assert_empty klass.new(ParamsViewContext.new(region: "eu")).visible_links
       end
 
-      def test_filter_choice_labels_resolve_lazy_procs
-        filter = Plutonium::Dashboard::Filter.new(:period, choices: {"7" => -> { "Last week" }, "30" => "Last month"})
+      class PublishedPostDefinition < ::Blogging::PostDefinition
+        default_scope :published
+        scope(:mine, condition: -> { params[:author] == "yes" }) { |posts| posts }
+      end
 
-        assert_equal "Last week", filter.choice_label("7")
-        assert_equal "Last month", filter.choice_label("30")
+      # A post definition whose `default_scope :published` the dummy's lacks.
+      class ScopedDashboard < Plutonium::Dashboard::Base
+        filter :status, scopes: ::Blogging::Post
+
+        def resource_definition_for(_resource_class) = PublishedPostDefinition.new
+      end
+
+      class ScopeViewContext < ParamsViewContext
+        def resource_url_for(klass, parent:, **options) = [klass, options]
+      end
+
+      def scoped_dashboard(params, klass = ScopedDashboard)
+        klass.new(ScopeViewContext.new(params))
+      end
+
+      def test_a_scope_filter_defaults_to_the_definitions_default_scope
+        assert_equal "published", scoped_dashboard({}).filter_value(:status)
+        assert_equal [::Blogging::Post, {q: {scope: "published"}}], scoped_dashboard({}).filtered_url(::Blogging::Post)
+      end
+
+      # Without an explicit blank the index would apply its default scope.
+      def test_filtered_url_sends_all_explicitly_over_a_default_scope
+        assert_equal [::Blogging::Post, {q: {scope: ""}}], scoped_dashboard(status: "all").filtered_url(::Blogging::Post)
+      end
+
+      def test_scope_choices_follow_the_scopes_conditions
+        assert_equal %w[all published drafts archived], scoped_dashboard({}).filter_choices(ScopedDashboard.filters.first).keys
+        assert_includes scoped_dashboard(author: "yes").filter_choices(ScopedDashboard.filters.first).keys, "mine"
+      end
+
+      # A default the user's conditions hide must not 500 the page.
+      def test_a_default_hidden_by_its_condition_reads_as_all
+        klass = Class.new(ScopedDashboard) do
+          filters.clear
+          filter :status, scopes: ::Blogging::Post, default: :mine
+        end
+
+        assert_equal "all", scoped_dashboard({}, klass).filter_value(:status)
+        assert_equal "mine", scoped_dashboard({author: "yes"}, klass).filter_value(:status)
+      end
+
+      def test_a_default_that_is_not_a_scope_raises
+        klass = Class.new(ScopedDashboard) do
+          filters.clear
+          filter :status, scopes: ::Blogging::Post, default: :publshed
+        end
+
+        assert_raises(ArgumentError) { scoped_dashboard({}, klass).filter_value(:status) }
+      end
+
+      def test_a_definition_scope_named_all_is_refused
+        definition = Class.new(::Blogging::PostDefinition) { scope :all }
+        klass = Class.new(ScopedDashboard) do
+          define_method(:resource_definition_for) { |_| definition.new }
+        end
+
+        assert_raises(ArgumentError) { scoped_dashboard({}, klass).filter_value(:status) }
+      end
+
+      def test_one_scope_filter_per_resource
+        klass = Class.new(Plutonium::Dashboard::Base) { filter :status, scopes: ::Blogging::Post }
+
+        assert_raises(ArgumentError) { klass.filter(:visibility, scopes: ::Blogging::Post) }
+      end
+
+      def test_filter_needs_exactly_one_of_choices_or_scopes
+        assert_raises(ArgumentError) { Plutonium::Dashboard::Filter.new(:a) }
+        assert_raises(ArgumentError) { Plutonium::Dashboard::Filter.new(:a, choices: {"x" => "X"}, scopes: ::Blogging::Post) }
+        assert_raises(ArgumentError) { Plutonium::Dashboard::Filter.new(:a, scopes: "Blogging::Post") }
+        assert Plutonium::Dashboard::Filter.new(:a, scopes: ::Blogging::Post).scopes?
       end
 
       def test_filter_keys_reserved_by_the_card_route_are_refused
         klass = Class.new(Plutonium::Dashboard::Base)
-        %i[card format anchor host script_name dashboard_class].each do |key|
+        %i[card format anchor host script_name dashboard_class use_route _recall].each do |key|
           assert_raises(ArgumentError, key.inspect) { klass.filter(key, choices: {"x" => "X"}) }
         end
       end
