@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.68.0] - 2026-10-14
+
+### Bug Fixes
+
+- Send card links to the whole page ([#183](https://github.com/radioactive-labs/plutonium-core/issues/183))
+- Keep the grid card cover's space when a record has no image ([#184](https://github.com/radioactive-labs/plutonium-core/issues/184))
+
+### Features
+
+- Filters carried to card frames, toolbar links, point changes ([#182](https://github.com/radioactive-labs/plutonium-core/issues/182))
+- Checkbox, toggle and radio variants of the association input ([#185](https://github.com/radioactive-labs/plutonium-core/issues/185))
+- Scope filters, plus fixes from the #182 review ([#186](https://github.com/radioactive-labs/plutonium-core/issues/186))
+
 ## [0.67.0] - 2026-10-09
 
 ### Bug Fixes
