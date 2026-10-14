@@ -87,12 +87,23 @@ module Plutonium
             uri.to_s
           end
 
+          # Capped at `choice_limit`, plus the records the field holds now:
+          # one past the cap or outside the viewer's scope would otherwise not
+          # render, and saving the form would drop it (a select falls back to
+          # its blank option, an unrendered checkbox is not submitted).
           def choices
             @choices ||= begin
               collection = @raw_choices || authorized_relation
-              collection = collection.limit(@choice_limit) if @choice_limit && collection.respond_to?(:limit)
+              if collection.is_a?(ActiveRecord::Relation)
+                collection = collection.limit(@choice_limit) if @choice_limit
+                collection = (collection.to_a + selected_records).uniq
+              end
               build_choice_mapper(collection)
             end
+          end
+
+          def selected_records
+            @selected_records ||= Array(field.object.public_send(association_reflection.name))
           end
 
           # Builds the authorized association relation. Shared by `choices`
@@ -106,8 +117,11 @@ module Plutonium
             authorized_resource_scope(klass, relation: relation)
           end
 
+          # AssociationBase#build_attributes already calls
+          # build_association_attributes. Calling it here too ran it twice, and
+          # the second pass re-read the keys the first had deleted, silently
+          # dropping `skip_authorization:` and `add_action:`.
           def build_attributes
-            build_association_attributes
             super
             # Stash; the URL helper needs view_context which only exists
             # once we're rendering.
@@ -163,8 +177,16 @@ module Plutonium
           # not include records reachable via typeahead). For explicit
           # `@raw_choices`, fall back to membership in the rendered list.
           def normalize_simple_input(input_value)
+            # An explicit blank (the select's blank option, a "None" radio)
+            # clears a singular association: "" survives resource_params'
+            # `compact` and `<name>_sgid = ""` locates nil. A field that was not
+            # submitted arrives as nil and is left alone.
+            return "" if input_value == "" && !attributes[:multiple]
+
             sgid = SignedGlobalID.parse(input_value.presence)
             return nil unless sgid
+            # Keeping what the field already holds is not a new grant.
+            return sgid if selected_records.map(&:to_global_id).include?(sgid)
 
             if @raw_choices
               @signed_global_ids ||= choices.values.map { |choice| SignedGlobalID.parse(choice) }
@@ -177,13 +199,14 @@ module Plutonium
             nil
           end
 
+          # Compared as URI strings: URI objects don't match by value in a Set.
           def selected?(option)
-            case association_reflection.macro
-            when :belongs_to, :has_one
-              singular_field_value == SignedGlobalID.parse(option)
-            when :has_many, :has_and_belongs_to_many
-              collection_field_value.any? { |item| item == SignedGlobalID.parse(option) }
-            end
+            selected_gids.include?(SignedGlobalID.parse(option)&.uri&.to_s)
+          end
+
+          def selected_gids
+            @selected_gids ||= Array(attributes[:multiple] ? collection_field_value : singular_field_value)
+              .compact.to_set { |sgid| sgid.uri.to_s }
           end
 
           def singular_field_value

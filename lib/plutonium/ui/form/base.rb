@@ -147,6 +147,26 @@ module Plutonium
           # has to be re-pointed explicitly or habtm skips the policy scope.
           alias_method :has_and_belongs_to_many_tag, :secure_association_tag
 
+          # List-style variants of the association input: one control per
+          # authorized record instead of a slim-select. Same policy scoping,
+          # SGID validation and inline "+" add button.
+          def secure_association_checkboxes_tag(**, &)
+            create_component(Components::SecureAssociationCheckboxes, :association_checkboxes, **, &)
+          end
+          alias_method :association_checkboxes_tag, :secure_association_checkboxes_tag
+
+          def secure_association_toggles_tag(**, &)
+            create_component(Components::SecureAssociationToggles, :association_toggles, **, &)
+          end
+          alias_method :association_toggles_tag, :secure_association_toggles_tag
+          alias_method :association_switches_tag, :secure_association_toggles_tag
+
+          def secure_association_radio_buttons_tag(**, &)
+            create_component(Components::SecureAssociationRadioButtons, :association_radio_buttons, **, &)
+          end
+          alias_method :association_radio_buttons_tag, :secure_association_radio_buttons_tag
+          alias_method :association_radios_tag, :secure_association_radio_buttons_tag
+
           def secure_polymorphic_association_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
             create_component(Components::SecurePolymorphicAssociation, :polymorphic_association, **attributes, &)
