@@ -92,6 +92,15 @@ class OrgPortal::BreadcrumbsTest < ActionDispatch::IntegrationTest
     assert_equal ["Home", "Products"], breadcrumb_labels_for(product_path)
   end
 
+  test "an index page adds no segment, its title already names the list" do
+    assert_equal ["Home"], breadcrumb_labels_for("/org/#{@org.to_param}/blogging/posts")
+  end
+
+  test "a nested index page ends at the parent" do
+    assert_equal ["Home", "Products", product.to_label],
+      breadcrumb_labels_for("#{product_path}/nested_reviews")
+  end
+
   test "a nested has_one show page ends at the parent, mirroring the plural case" do
     # No trailing "Product detail": the heading already names it.
     assert_equal ["Home", "Products", product.to_label],

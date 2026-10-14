@@ -140,7 +140,46 @@ class Plutonium::UI::BreadcrumbsTest < ActiveSupport::TestCase
     assert_empty component.send(:middle_items)
   end
 
+  test "a collection page with no record links back to the resource index" do
+    component = trail_component(action: "interactive_resource_action")
+
+    assert_equal [["Posts", "/posts"]], component.send(:breadcrumb_items).map(&:call)
+  end
+
+  test "a custom collection route also links back to the resource index" do
+    component = trail_component(action: "calendar")
+
+    assert_equal [["Posts", "/posts"]], component.send(:breadcrumb_items).map(&:call)
+  end
+
+  test "the index page adds no segment, its title already names the list" do
+    component = trail_component(action: "index")
+
+    assert_empty component.send(:breadcrumb_items)
+  end
+
+  test "a singular resource with no record has no index to link back to" do
+    component = trail_component(action: "new", singular: true)
+
+    assert_empty component.send(:breadcrumb_items)
+  end
+
   private
+
+  # A component whose controller-facing helpers are stubbed to a recordless
+  # request on Posts, with `segment` reduced to its [label, url] pair.
+  def trail_component(action:, singular: false)
+    Plutonium::UI::Breadcrumbs.new.tap do |component|
+      component.define_singleton_method(:action_name) { action }
+      component.define_singleton_method(:current_parent) { nil }
+      component.define_singleton_method(:resource_record?) { nil }
+      component.define_singleton_method(:singular_resource_context?) { singular }
+      component.define_singleton_method(:resource_class) { Blogging::Post }
+      component.define_singleton_method(:nestable_resource_name_plural) { |_| "Posts" }
+      component.define_singleton_method(:resource_url_for) { |_| "/posts" }
+      component.define_singleton_method(:segment) { |label, url = nil| -> { [label, url] } }
+    end
+  end
 
   def render_component(component, &block)
     # Create a minimal rendering context

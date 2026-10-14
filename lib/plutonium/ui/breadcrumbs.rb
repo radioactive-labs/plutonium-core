@@ -48,8 +48,22 @@ module Plutonium
       def breadcrumb_items
         @breadcrumb_items ||= [].tap do |items|
           collect_parent_breadcrumbs(items) if current_parent.present?
-          collect_resource_breadcrumbs(items) if resource_record?
+          if resource_record?
+            collect_resource_breadcrumbs(items)
+          elsif collection_page?
+            collect_resource_index_breadcrumb(items)
+          end
         end
+      end
+
+      # A page that hangs off the resource list without being about one record:
+      # a resource action (import), a wizard launched from the index, or a
+      # custom collection route (calendar). It has no record to name, but the
+      # list it came from is still a level up. The index itself is excluded
+      # because its page title already says where you are, and a singular
+      # resource has no index to point back to.
+      def collection_page?
+        action_name != "index" && !singular_resource_context?
       end
 
       # The segments eligible to be folded into the overflow menu. The last one
@@ -151,21 +165,25 @@ module Plutonium
       end
 
       def collect_plural_resource_breadcrumbs(items)
-        # No `parent:` here on purpose: Resource::Controller#resource_url_args_for
-        # already defaults it to `current_parent` (and supplies
-        # `current_nested_association` with it), so both links nest themselves
-        # when the request arrived through a nesting. Passing it explicitly reads
-        # like it changes something; it doesn't. The parent segments above pass
-        # `parent: nil` precisely to opt OUT of that default.
-        items << segment(
-          nestable_resource_name_plural(resource_class),
-          resource_url_for(resource_class)
-        )
+        collect_resource_index_breadcrumb(items)
 
         # Record itself (for non-singular routes only)
         return unless resource_record!.persisted? && action_name != "show"
 
         items << segment(display_name_of(resource_record!), resource_url_for(resource_record!))
+      end
+
+      def collect_resource_index_breadcrumb(items)
+        # No `parent:` here on purpose: Resource::Controller#resource_url_args_for
+        # already defaults it to `current_parent` (and supplies
+        # `current_nested_association` with it), so the link nests itself
+        # when the request arrived through a nesting. Passing it explicitly reads
+        # like it changes something; it doesn't. The parent segments pass
+        # `parent: nil` precisely to opt OUT of that default.
+        items << segment(
+          nestable_resource_name_plural(resource_class),
+          resource_url_for(resource_class)
+        )
       end
 
       # Stands in for whatever the controller folded away, the way GitHub
