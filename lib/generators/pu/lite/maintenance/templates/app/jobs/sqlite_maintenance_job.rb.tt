@@ -26,6 +26,12 @@ class SqliteMaintenanceJob < ApplicationJob
   # churning DB sits at a steady-state size without nightly reclamation.
   VACUUM_DBS = %w[primary errors rails_pulse].freeze
 
+  # VACUUM holds that exclusive lock for as long as the rewrite takes, which on
+  # a large primary is long enough for inbound requests to time out waiting.
+  # WAL reuses freelist pages anyway, so the rewrite only pays off once a real
+  # share of the file is free, usually after a bulk delete.
+  VACUUM_MIN_FREE_RATIO = 0.1
+
   def perform
     OPTIMIZE_DBS.each { |db_name| run_maintenance(db_name) }
   end
@@ -46,6 +52,7 @@ class SqliteMaintenanceJob < ApplicationJob
       conn.execute("PRAGMA optimize")
 
       next unless VACUUM_DBS.include?(db_name)
+      next unless vacuum_worthwhile?(conn, db_name)
 
       Rails.logger.info { "[SqliteMaintenance] VACUUM on #{db_name}" }
       started = Time.current
@@ -53,8 +60,18 @@ class SqliteMaintenanceJob < ApplicationJob
       Rails.logger.info { "[SqliteMaintenance] VACUUM on #{db_name} done in #{(Time.current - started).round(2)}s" }
     end
   rescue => e
-    Rails.error.report(e, context: {db: db_name, action: "sqlite_maintenance"})
+    Rails.error.report(e, context: {db: db_name, action: "sqlite_maintenance"}, source: "sqlite_maintenance")
   ensure
     MaintenanceConnection.remove_connection
+  end
+
+  def vacuum_worthwhile?(conn, db_name)
+    free = conn.select_value("PRAGMA freelist_count").to_i
+    total = conn.select_value("PRAGMA page_count").to_i
+    ratio = total.zero? ? 0 : free.fdiv(total)
+    return true if ratio >= VACUUM_MIN_FREE_RATIO
+
+    Rails.logger.info { "[SqliteMaintenance] VACUUM on #{db_name} skipped, #{(ratio * 100).round(1)}% free" }
+    false
   end
 end

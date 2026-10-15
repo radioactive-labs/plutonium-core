@@ -279,6 +279,9 @@ class LiteGeneratorsTest < ActiveSupport::TestCase
     assert_includes job, "PRAGMA optimize"
     assert_includes job, "VACUUM"
     assert_includes job, "Rails.error.report"
+    assert_includes job, "VACUUM_MIN_FREE_RATIO = 0.1"
+    assert_includes job, "PRAGMA freelist_count"
+    assert_includes job, "next unless vacuum_worthwhile?(conn, db_name)"
   end
 
   test "maintenance task yaml uses the schedule option and is valid YAML" do
@@ -289,5 +292,19 @@ class LiteGeneratorsTest < ActiveSupport::TestCase
     parsed = YAML.safe_load(yaml)
     assert_equal "SqliteMaintenanceJob", parsed["sqlite_maintenance"]["class"]
     assert_equal "*/30 * * * *", parsed["sqlite_maintenance"]["schedule"]
+  end
+
+  test "maintenance generator has clear_finished_schedule option defaulting to hourly" do
+    options = Pu::Lite::MaintenanceGenerator.class_options
+    assert_equal "every hour at minute 12", options[:clear_finished_schedule].default
+  end
+
+  test "clear finished jobs task yaml calls clear_finished_in_batches on the schedule option" do
+    require "yaml"
+    gen = Pu::Lite::MaintenanceGenerator.new([], {clear_finished_schedule: "every 30 minutes"}, {})
+    task = YAML.safe_load(gen.send(:clear_finished_jobs_task_yaml))["clear_solid_queue_finished_jobs"]
+
+    assert_equal "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)", task["command"]
+    assert_equal "every 30 minutes", task["schedule"]
   end
 end
