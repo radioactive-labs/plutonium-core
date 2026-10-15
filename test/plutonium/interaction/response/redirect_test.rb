@@ -75,6 +75,15 @@ module Plutonium
             @render_calls << options
           end
 
+          # Rails' own check and its default, private on
+          # ActionController::Redirecting. Tested for real below; here they only
+          # have to let a relative URL through.
+          def _enforce_open_redirect_protection(location, allow_other_host:)
+            location
+          end
+
+          def _allow_other_host = false
+
           def respond_to
             @format = MockFormat.new
             yield @format
@@ -122,7 +131,9 @@ module Plutonium
           assert_equal true, options[:allow_other_host]
         end
 
-        test "execute redirects for turbo_stream without remote_modal" do
+        # A plain redirect_to is followed by fetch, and the page it lands on is
+        # rendered into whatever frame submitted the form.
+        test "execute renders turbo_stream_redirect for turbo_stream outside the modal" do
           controller = MockController.new
           controller.helpers.turbo_frame = nil
           response = Redirect.new("/next")
@@ -130,7 +141,21 @@ module Plutonium
           response.process(controller)
           controller.simulate_turbo_stream
 
-          assert_equal 1, controller.redirect_calls.size
+          assert_empty controller.redirect_calls
+          assert_includes controller.render_calls.first[:turbo_stream], "turbo_redirect_to_/next"
+        end
+
+        test "a turbo_stream request redirects to the page, not a .turbo_stream URL" do
+          controller = MockController.new
+          controller.request.format_symbol = :turbo_stream
+          def controller.url_for(*args) = args.last.is_a?(Hash) && args.last[:format] ? "/runs/1.#{args.last[:format]}" : "/runs/1"
+          response = Redirect.new(:run)
+
+          response.process(controller)
+          controller.simulate_turbo_stream
+
+          assert_includes controller.render_calls.first[:turbo_stream], "turbo_redirect_to_/runs/1"
+          refute_includes controller.render_calls.first[:turbo_stream], ".turbo_stream"
         end
 
         test "execute renders turbo_stream_redirect for remote_modal" do
@@ -196,6 +221,81 @@ module Plutonium
           response.process(controller)
 
           assert_equal "Redirecting...", controller.flash[:notice]
+        end
+
+        # A real controller, because the check under test is Rails' own.
+        def turbo_stream_controller
+          ::AdminPortal::PlutoniumController.new.tap do |controller|
+            controller.set_request!(ActionDispatch::TestRequest.create(
+              "HTTP_ACCEPT" => "text/vnd.turbo-stream.html", "HTTP_HOST" => "example.test"
+            ))
+            controller.set_response!(ActionDispatch::TestResponse.new)
+          end
+        end
+
+        # turbo_stream_redirect is a client-side Turbo.visit, which navigates
+        # to any host. It must be held to the same rule redirect_to is.
+        test "a turbo_stream redirect to another host is refused" do
+          assert_raises(ActionController::Redirecting::UnsafeRedirectError) do
+            Redirect.new("https://evil.test/steal").process(turbo_stream_controller)
+          end
+        end
+
+        test "a turbo_stream redirect to another host goes through with allow_other_host" do
+          controller = turbo_stream_controller
+
+          Redirect.new("https://partner.test/next", allow_other_host: true).process(controller)
+
+          assert_includes controller.response.body, 'url="https://partner.test/next"'
+        end
+
+        test "a turbo_stream redirect within the app goes through" do
+          controller = turbo_stream_controller
+
+          Redirect.new("/admin/async_runs/1").process(controller)
+
+          assert_includes controller.response.body, 'url="/admin/async_runs/1"'
+        end
+
+        # These are mattr_accessors, process-wide, so each is put back after.
+        def with_redirect_config(controller, **settings)
+          previous = settings.keys.to_h { |key| [key, controller.public_send(key)] }
+          settings.each { |key, value| controller.public_send(:"#{key}=", value) }
+          yield
+        ensure
+          previous.each { |key, value| controller.public_send(:"#{key}=", value) }
+        end
+
+        # redirect_to's default follows the app's setting, so the stream visit
+        # must too: an app that opted out of the check is not held to it here.
+        # On 8.1 action_on_open_redirect has the final say, covered below.
+        test "a turbo_stream redirect to another host follows raise_on_open_redirects = false" do
+          skip "action_on_open_redirect decides on Rails 8.1+" if ActionPack.gem_version >= Gem::Version.new("8.1")
+
+          controller = turbo_stream_controller
+
+          with_redirect_config(controller, raise_on_open_redirects: false) do
+            Redirect.new("https://partner.test/next").process(controller)
+          end
+
+          assert_includes controller.response.body, 'url="https://partner.test/next"'
+        end
+
+        # From 8.1 the check itself resolves a nil allow_other_host, which is
+        # what lets action_on_open_redirect log instead of raise.
+        test "a turbo_stream redirect to another host is logged under action_on_open_redirect = :log" do
+          skip "action_on_open_redirect is Rails 8.1+" if ActionPack.gem_version < Gem::Version.new("8.1")
+
+          controller = turbo_stream_controller
+          log = StringIO.new
+
+          with_redirect_config(controller, raise_on_open_redirects: false, action_on_open_redirect: :log,
+            logger: ActiveSupport::Logger.new(log)) do
+            Redirect.new("https://partner.test/next").process(controller)
+          end
+
+          assert_includes controller.response.body, 'url="https://partner.test/next"'
+          assert_match(/Open redirect to "https:\/\/partner.test\/next" detected/, log.string)
         end
       end
     end
