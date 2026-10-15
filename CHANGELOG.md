@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.69.0] - 2026-10-15
+
+### Bug Fixes
+
+- Link collection pages without a record back to the resource index in breadcrumbs
+- Vendor Font Awesome 4 so its .sr-only stops overriding Tailwind utilities
+- Answer turbo-stream redirects with a stream visit, held to the open-redirect check
+- Perform opaque runs dispatched from a resource index
+
+### Features
+
+- Drop the Interaction suffix from default labels
+- Name runs by their interaction, show progress as one cell
+- Check a run's input before processing with pre_check
+- Clear finished SolidQueue jobs and gate VACUUM on free pages in pu:lite:maintenance
+
+### Miscellaneous Tasks
+
+- Update gemfiles
+
 ## [0.68.0] - 2026-10-14
 
 ### Bug Fixes
