@@ -36,8 +36,11 @@ module Plutonium
         # Returns the label for the interaction.
         #
         # @return [String] The label defined in the presentation metadata or a default generated from the class name.
+        #   The conventional "Interaction" suffix is dropped: ImportPostsInteraction reads "Import Posts".
+        #   Only a suffix: a class named just Interaction keeps its name rather than going blank.
         def label
-          Plutonium::Translation.resolve(presentation_metadata[:label]) || name.demodulize.titleize
+          Plutonium::Translation.resolve(presentation_metadata[:label]) ||
+            name.demodulize.sub(/(?<=.)Interaction\z/, "").titleize
         end
 
         # Returns the icon for the interaction.
