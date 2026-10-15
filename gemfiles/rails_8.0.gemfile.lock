@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ..
   specs:
-    plutonium (0.66.0)
+    plutonium (0.68.0)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
@@ -20,7 +20,7 @@ PATH
       phlex-tabler_icons
       phlexi-display (>= 0.2.0)
       phlexi-field (>= 0.2.0)
-      phlexi-form (>= 0.14.3)
+      phlexi-form (>= 0.14.4)
       phlexi-menu (>= 0.4.1)
       phlexi-table (>= 0.2.0)
       rabl (~> 0.17.0)
@@ -252,7 +252,7 @@ GEM
       fiber-local
       phlex (~> 2.0)
       zeitwerk
-    phlexi-form (0.14.3)
+    phlexi-form (0.14.4)
       activesupport
       phlex (~> 2.0)
       phlexi-field (~> 0.2.0)
