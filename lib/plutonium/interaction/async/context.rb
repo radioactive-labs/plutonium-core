@@ -225,9 +225,14 @@ module Plutonium
         #
         # @return [Targets]
         def targets
+          unless run.targeted?
+            raise UnresolvableError,
+              "run #{run.id} (#{run.class}) is not a targeted run; it has no targets to resolve"
+          end
+
           unless run.target_type
             raise UnresolvableError,
-              "run #{run.id} (#{run.class}) has no target_type; it is not a targeted run"
+              "run #{run.id} (#{run.class}) has no target_type; it cannot resolve its targets"
           end
 
           key = target_class.primary_key
@@ -380,8 +385,13 @@ module Plutonium
         #
         # Only meaningful for a targeted run — untargeted work has no target
         # resource and therefore no policy to pin.
+        #
+        # Keyed on Run#targeted?, not on target_type: an opaque run dispatched
+        # from a resource still records target_type (it is what puts the run in
+        # that resource's banner), but it resolves no targets, so it pins no
+        # policy and there is nothing here to verify.
         def verify_policy!
-          return if run.target_type.nil?
+          return unless run.targeted? && run.target_type
 
           # A targeted run with no recorded policy is not "unasserted", it is
           # unverifiable: there is nothing to compare today's lookup against, and

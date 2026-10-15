@@ -309,6 +309,15 @@ class Plutonium::Interaction::Async::ExecutorTest < ActiveSupport::TestCase
     assert_equal "completed", run.state
   end
 
+  # The shape dispatch writes for opaque work started from a resource's index:
+  # the resource named, no ids, no policy pinned.
+  test "an opaque run that names its resource is performed, not refused for a missing policy" do
+    run = execute!(TestReportRun.create!(initiator: @user, scoped_entity: @org,
+      target_type: "Blogging::Post"))
+
+    assert_equal "completed", run.state, messages(run).inspect
+  end
+
   test "an opaque run that heartbeats stays out of the reaper's reach" do
     BeatingOpaqueRun.beats = []
     BeatingOpaqueRun.before_beat = nil

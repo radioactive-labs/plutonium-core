@@ -401,6 +401,28 @@ class Plutonium::Interaction::Async::ContextTest < ActiveSupport::TestCase
     assert_raises(Context::UnresolvableError) { context.targets }
   end
 
+  # Dispatched from a resource's index, opaque work still records target_type,
+  # which is what puts it in that index's running banner. That makes it a run
+  # that concerns a resource, not a targeted run, and it must still perform.
+  test "an opaque run that names its resource is not treated as targeted" do
+    run = TestReportRun.create!(initiator: @user, scoped_entity: @org,
+      target_type: "Blogging::Post", target_ids: [])
+    context = Context.new(run)
+
+    assert_nil run.policy_class_name
+    error = assert_raises(Context::UnresolvableError) { context.targets }
+    assert_match(/is not a targeted run/, error.message)
+  end
+
+  # The other half of the guard, which must not report a targeted run as
+  # untargeted: the class declares work per target, the row names no type.
+  test "a targeted run with no target_type says so" do
+    run = TestPostRun.create!(initiator: @user, scoped_entity: @org, target_ids: [@post.id])
+
+    error = assert_raises(Context::UnresolvableError) { Context.new(run).targets }
+    assert_match(/has no target_type/, error.message)
+  end
+
   test "a nil namespace resolves the top-level policy" do
     context = Context.new(create_run!(target_ids: [@post.id], namespace: nil))
 
