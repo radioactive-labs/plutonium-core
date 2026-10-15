@@ -63,22 +63,22 @@ module Plutonium
         # unreadably.
         def permitted_attributes_for_read
           %i[
-            type outcome progress_done progress_total
+            interaction_label outcome progress
             target_label initiator started_at finished_at created_at
           ]
         end
 
-        # The show page drops the progress COUNTERS, for the reason errors_log
+        # The show page drops the progress cell, for the reason errors_log
         # is absent above: the panel already renders them, as "5 of 5 targets
         # (100%)" over a bar. Two renderings of one number is the same report
         # twice — and they disagree, because only the panel is inside the polled
         # frame. A page that says "Completed" and "0 done" at once is worse than
         # either alone.
         #
-        # The INDEX keeps them. There is no progress bar in a table row, so the
-        # counters are the only progress it can show.
+        # The INDEX keeps it. There is no progress bar in a table row, so the
+        # cell is the only progress it can show.
         def permitted_attributes_for_show
-          permitted_attributes_for_read - %i[progress_done progress_total]
+          permitted_attributes_for_read - %i[progress]
         end
       end
     end

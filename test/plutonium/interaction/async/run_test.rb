@@ -134,6 +134,36 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     Object.send(:remove_const, :LabelProbeInteraction) if defined?(LabelProbeInteraction)
   end
 
+  # A run declared by Dispatchable#async is <Interaction>::Run.
+  def nested_run(interaction_name, &body)
+    interaction = Class.new(Plutonium::Interaction::Base, &body)
+    Object.const_set(interaction_name, interaction)
+    interaction.const_set(:Run, Class.new(Plutonium::Interaction::Async::Run))
+  end
+
+  test "a nested run is named by its interaction's label" do
+    run_class = nested_run(:LabelledImportInteraction) { presents label: "Import CSV" }
+    run = run_class.new(initiator: create_user!, id: 6)
+
+    assert_equal "Import CSV", run.interaction_label
+    assert_equal "Import CSV #6", run.to_label
+  ensure
+    Object.send(:remove_const, :LabelledImportInteraction) if defined?(LabelledImportInteraction)
+  end
+
+  test "an interaction without presents label drops the Interaction suffix" do
+    run_class = nested_run(:ImportPostsInteraction)
+
+    assert_equal "Import Posts #6", run_class.new(initiator: create_user!, id: 6).to_label
+  ensure
+    Object.send(:remove_const, :ImportPostsInteraction) if defined?(ImportPostsInteraction)
+  end
+
+  test "progress reads done over total, and is nil for opaque work" do
+    assert_equal "1 / 4", build(progress_done: 1, progress_total: 4).progress
+    assert_nil build(TestOpaqueRun).progress
+  end
+
   test "target_label humanizes the target class, falls back on a stale one, and is nil for opaque work" do
     assert_equal "Post", build(TestArchiveRun, target_type: "Blogging::Post").target_label
     assert_nil build(TestOpaqueRun).target_label

@@ -91,17 +91,18 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
     # same two numbers again as fields is one report twice — and only the panel
     # is inside the polled frame, so the two drift apart the moment it advances.
     assert_match(/1 of 4 targets/, response.body, "the panel still reports progress")
-    refute_match(/Progress done/i, response.body)
-    refute_match(/Progress total/i, response.body)
+    refute_match(%r{1 / 4}, response.body)
   end
 
-  test "the index still shows the counters, having no bar to show instead" do
+  test "the index shows progress as one cell, having no bar to show instead" do
     create_run!(state: "running", progress_total: 4, progress_done: 1)
 
     get "/admin/async_runs"
     assert_response :success
 
-    assert_match(/Progress done/i, response.body)
+    assert_match(%r{>\s*Progress\s*<}, response.body)
+    assert_match(%r{1 / 4}, response.body)
+    refute_match(/Progress done/i, response.body)
   end
 
   test "the poll that finds the run finished tells the page to reload" do

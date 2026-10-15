@@ -92,6 +92,13 @@ class Plutonium::Interaction::Async::RunPolicyTest < ActiveSupport::TestCase
     refute_includes readable, :target_type
   end
 
+  test "the interaction's label is readable in place of the STI type column" do
+    readable = policy_for(entity_scope: @org).permitted_attributes_for_read
+
+    assert_includes readable, :interaction_label
+    refute_includes readable, :type
+  end
+
   # The raw column reads "completed" for a run that failed some of its targets.
   # Only #outcome distinguishes the two, so only #outcome is readable.
   test "the raw state column is not readable on its own" do

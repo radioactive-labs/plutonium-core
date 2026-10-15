@@ -209,15 +209,16 @@ A registered run resource gets, for free:
 - **A self-refreshing index.** The runs index polls on the same terms as the progress page: one frame around the whole collection, armed only while some run is still working, disarmed the moment none is. One request per interval regardless of page size, and it re-fetches the URL you are on, so filters, sort and page survive the refresh. A frame per row is not an option: `turbo-frame` is not in the content model of `tr`, so the parser hoists it out of the table before Turbo sees it.
 - **A running banner.** Any OTHER resource's index page lists runs currently in progress against it, above the collection, so a user who dispatched a bulk action and navigated away can find it again. Scoped through the same `authorized_resource_scope` every cross-resource read goes through, so a run in another tenant can never surface. If a resource_class is registered in a portal that never registered `Run`, the banner is skipped there instead of raising while trying to build a link to a route that doesn't exist.
 - **Tenant scoping.** A run's `associated_with` scope filters on the tenant it was dispatched in (recorded on the row), not on walking the object graph, since the two polymorphic tenant columns make the generic scope unusable.
+- **Runs named by their interaction.** A run declared with an `async` block is titled by its interaction's label ("Archive all (async) #19"), from `presents label:` or, without one, the class name minus its `Interaction` suffix. A standalone run class passed to `async` can be shared by several interactions, so it is named after its own class. Only `presents label:` reaches the run: a `label:` on the `action` declaration, or a `plutonium.actions.<model>.<action>` translation, renames the button but not the runs it starts, so put the label on the interaction when both should match.
 - **A humanized target label.** `run.target_label` reads the target class through `model_name.human` ("Post", not "Blogging::Post"), falling back to the raw string if that class has since been renamed or removed.
 
 The progress page, mid-run:
 
-![A run's progress page showing a Running badge, a progress bar at 27 of 50 targets, and the run's type, target type, initiator and timestamps](/images/reference/async-progress-page.png)
+![A run's progress page showing a Running badge, a progress bar at 27 of 50 targets, and the run's action, target type, initiator and timestamps](/images/reference/async-progress-page.png)
 
 And the banner it leaves on the target resource's index while it is still going:
 
-![A Task index with a banner above the collection reading "Archive Tasks Async Interaction Run #19 Running", with a View progress link](/images/reference/async-running-banner.png)
+![A Task index with a banner above the collection reading "Archive all (async) #19 Running", with a View progress link](/images/reference/async-running-banner.png)
 
 ## Stalled runs and ReapJob
 

@@ -153,23 +153,42 @@ module Plutonium
 
         # Runs have no name or title, so Labeling would fall back to
         # "Async run #12" — true but silent about the only thing that
-        # distinguishes one row from the next.
-        #
-        # Demodulized: a host's run class is as likely to be
-        # Billing::ReissueInvoicesRun as a top-level one, and the namespace adds
-        # nothing to a label that already sits under the run's own breadcrumb.
-        #
-        # Except when demodulizing is what throws the name away. A run declared
-        # by Dispatchable#async is Blogging::ArchivePosts::Run, and every
-        # one of them would render "Run #12" — the failure mode this method
-        # exists to avoid, reintroduced for the shape most authors will write.
-        # For those, the enclosing segment IS the name, so it is folded back in.
+        # distinguishes one row from the next. The dispatching interaction's
+        # label is that thing: "Import Posts #12".
         #
         # @return [String]
         def to_label
-          parts = self.class.name.split("::")
-          name = (parts.last == "Run" && parts.size > 1) ? "#{parts[-2]}Run" : parts.last
-          I18n.t("plutonium.async.run.label", name: name.titleize, id: to_param)
+          I18n.t("plutonium.async.run.label", name: interaction_label, id: to_param)
+        end
+
+        # The interaction's label (its `presents label:`), or a name derived from
+        # the run class for a run with no interaction behind it.
+        #
+        # @return [String]
+        def interaction_label
+          interaction_class&.label || run_class_label
+        end
+
+        # The interaction this run belongs to. A run declared by
+        # Dispatchable#async is <Interaction>::Run, so it is the enclosing class.
+        # nil for a standalone run class, which may be shared by several
+        # interactions and so belongs to none of them.
+        #
+        # @return [Class, nil]
+        def interaction_class
+          parent = self.class.module_parent
+          parent if parent < Plutonium::Interaction::Base
+        end
+
+        # The index's progress cell: "1 / 4", or nil for opaque work. Two
+        # counter columns showed opaque work as "0" done of nothing, which reads
+        # as a run that did nothing rather than one with no count to report.
+        #
+        # @return [String, nil]
+        def progress
+          return nil if progress_total.nil?
+
+          I18n.t("plutonium.async.run.progress", done: progress_done, total: progress_total)
         end
 
         # nil means INDETERMINATE, not zero: opaque work has no denominator, and
@@ -378,6 +397,17 @@ module Plutonium
         end
 
         private
+
+        # For a standalone run class, passed as `async Billing::ReissueInvoicesRun`,
+        # which has no interaction around it to take a label from. Demodulized,
+        # since the namespace adds nothing under the run's own breadcrumb. A
+        # <Something>::Run that is not inside an interaction keeps the enclosing
+        # segment, or every one of them would read "Run".
+        def run_class_label
+          parts = self.class.name.split("::")
+          name = (parts.last == "Run" && parts.size > 1) ? "#{parts[-2]}Run" : parts.last
+          name.titleize
+        end
 
         # Not swallowed: after_commit runs synchronously, so re-raising here
         # still surfaces to the dispatching request rather than leaving a

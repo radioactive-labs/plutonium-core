@@ -7,6 +7,8 @@ en:
     async:
       run:
         label: "%{name} #%{id}"
+        interaction: "Action"
+        progress: "%{done} / %{total}"
         target_type: "Target type"
         enqueue_failed: "could not be enqueued for execution"
       executor:
