@@ -65,6 +65,57 @@ end
 class UndefinedWorkRun < Plutonium::Interaction::Async::Run
 end
 
+# A check whose behaviour each test scripts. `checked` records what the check
+# was handed, so a test can assert which records a targeted check saw.
+class CheckedRun < ScriptedRun
+  on_failure :continue
+  cattr_accessor :check
+  cattr_accessor :checked
+
+  def pre_check(records)
+    self.class.checked = records.map(&:id)
+    self.class.check&.call(self, records)
+  end
+end
+
+# Records whether the batch transaction opened. Executor#perform_all_or_nothing
+# is the only caller of Run.transaction; update! goes through the connection.
+class TransactionalCheckedRun < CheckedRun
+  on_failure :transactional
+  cattr_accessor :batch_opened
+
+  def self.transaction(...)
+    self.batch_opened = true
+    super
+  end
+end
+
+class CheckedOpaqueRun < Plutonium::Interaction::Async::Run
+  cattr_accessor :check
+  cattr_accessor :calls
+
+  def pre_check = self.class.check&.call(self)
+
+  def perform = self.class.calls += 1
+end
+
+# Opaque-shaped check declared on a targeted run: the arity mistake an author
+# makes when copying an opaque example.
+class MisdeclaredCheckRun < ScriptedRun
+  def pre_check = nil
+end
+
+# Keyword-only: arity 1, but a positional call raises a bare ArgumentError.
+class KeywordCheckRun < ScriptedRun
+  def pre_check(records:) = nil
+end
+
+class RecordsCheckOpaqueRun < Plutonium::Interaction::Async::Run
+  def pre_check(records) = nil
+
+  def perform = nil
+end
+
 class Plutonium::Interaction::Async::ExecutorTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveSupport::Testing::TimeHelpers
@@ -80,6 +131,11 @@ class Plutonium::Interaction::Async::ExecutorTest < ActiveSupport::TestCase
     ScriptedRun.script = nil
     ScriptedRun.performed = []
     OpaqueScriptedRun.calls = 0
+    CheckedRun.check = nil
+    CheckedRun.checked = nil
+    TransactionalCheckedRun.batch_opened = false
+    CheckedOpaqueRun.check = nil
+    CheckedOpaqueRun.calls = 0
 
     @user = create_user!
     @org = create_organization!
@@ -588,6 +644,186 @@ class Plutonium::Interaction::Async::ExecutorTest < ActiveSupport::TestCase
     assert_equal "low", Job.new.queue_name
   ensure
     Plutonium.configuration.async_interactions.queue = :default
+  end
+
+  # --- pre_check ------------------------------------------------------------
+
+  test "an opaque run whose check rejects nothing performs" do
+    run = execute!(CheckedOpaqueRun.create!(initiator: @user, scoped_entity: @org))
+
+    assert_equal 1, CheckedOpaqueRun.calls
+    assert_equal "completed", run.state
+  end
+
+  test "an opaque run whose check rejects is not performed" do
+    CheckedOpaqueRun.check = ->(run) { run.reject("missing header: email") }
+
+    run = execute!(CheckedOpaqueRun.create!(initiator: @user, scoped_entity: @org))
+
+    assert_equal 0, CheckedOpaqueRun.calls
+    assert_equal "rejected", run.outcome
+    assert_equal ["missing header: email"], messages(run)
+  end
+
+  test "a targeted check receives the resolved records and gates the work" do
+    first = create_post!(user: @user, organization: @org, title: "first")
+    second = create_post!(user: @user, organization: @org, title: "second")
+    CheckedRun.check = ->(run, records) { run.reject("mixed") if records.size > 1 }
+
+    run = execute!(create_run!(CheckedRun, target_ids: [first.id, second.id]))
+
+    assert_equal [first.id, second.id].sort, CheckedRun.checked.sort
+    assert_empty ScriptedRun.performed, "a rejected run must not touch a target"
+    assert_equal "rejected", run.outcome
+    assert_equal 0, run.progress_done
+    assert_equal "first", first.reload.title
+  end
+
+  test "a targeted run whose check passes performs every target" do
+    post = create_post!(user: @user, organization: @org)
+
+    run = execute!(create_run!(CheckedRun, target_ids: [post.id]))
+
+    assert_equal [post.id], ScriptedRun.performed
+    assert_equal "completed", run.state
+  end
+
+  test "every rejection is recorded, in order" do
+    CheckedOpaqueRun.check = ->(run) { 3.times { |i| run.reject("line #{i + 2}: missing email") } }
+
+    run = execute!(CheckedOpaqueRun.create!(initiator: @user, scoped_entity: @org))
+
+    assert_equal ["line 2: missing email", "line 3: missing email", "line 4: missing email"], messages(run)
+  end
+
+  test "rejections past max_rejections are summarized with the exact remainder" do
+    config = Plutonium.configuration.async_interactions
+    previous = config.max_rejections
+    config.max_rejections = 2
+    CheckedOpaqueRun.check = ->(run) { 7.times { |i| run.reject("line #{i}") } }
+
+    run = execute!(CheckedOpaqueRun.create!(initiator: @user, scoped_entity: @org))
+
+    assert_equal ["line 0", "line 1", "and 5 more problems were found"], messages(run)
+  ensure
+    config.max_rejections = previous
+  end
+
+  # "Your input is wrong" and "the check itself broke" are different reports.
+  test "an exception raised in the check fails the run rather than rejecting it" do
+    CheckedOpaqueRun.check = ->(_run) { raise "unreadable file" }
+
+    run = execute!(CheckedOpaqueRun.create!(initiator: @user, scoped_entity: @org))
+
+    assert_equal "failed", run.outcome
+    assert_equal ["unreadable file"], messages(run)
+    assert_equal 0, CheckedOpaqueRun.calls
+  end
+
+  test "a check declared with the wrong arguments names the expected signature" do
+    post = create_post!(user: @user, organization: @org)
+
+    run = execute!(create_run!(MisdeclaredCheckRun, target_ids: [post.id]))
+
+    assert_equal "failed", run.state
+    assert_match(/MisdeclaredCheckRun#pre_check must take the records/, messages(run).first)
+    assert_empty ScriptedRun.performed
+  end
+
+  test "a resumed targeted run checks only the records it has left" do
+    done = create_post!(user: @user, organization: @org, title: "done")
+    remaining = create_post!(user: @user, organization: @org, title: "remaining")
+    run = create_run!(CheckedRun, target_ids: [done.id, remaining.id])
+
+    # Simulate an interruption after `done` was dispositioned WITHOUT being
+    # applied (a failure), then a reap: the earlier pass approved nothing.
+    run.record_target_failure!(id: done.id, message: "missing")
+    run.update!(state: "pending")
+
+    execute!(run)
+
+    assert_equal [remaining.id], CheckedRun.checked
+  end
+
+  test "a transactional run is rejected without opening a transaction" do
+    post = create_post!(user: @user, organization: @org)
+    CheckedRun.check = ->(run, _records) { run.reject("no") }
+
+    run = execute!(create_run!(TransactionalCheckedRun, target_ids: [post.id]))
+
+    assert_equal "rejected", run.outcome
+    refute TransactionalCheckedRun.batch_opened, "the batch transaction must never open"
+    assert_empty ScriptedRun.performed
+  end
+
+  # The control for the test above: a passing check does reach the batch.
+  test "a transactional run whose check passes opens its batch" do
+    post = create_post!(user: @user, organization: @org)
+
+    run = execute!(create_run!(TransactionalCheckedRun, target_ids: [post.id]))
+
+    assert_equal "completed", run.state
+    assert TransactionalCheckedRun.batch_opened
+  end
+
+  test "a resumed run whose earlier pass applied a target skips the check" do
+    first = create_post!(user: @user, organization: @org, title: "first")
+    second = create_post!(user: @user, organization: @org, title: "second")
+    run = create_run!(CheckedRun, target_ids: [first.id, second.id])
+
+    # An earlier pass applied `first`, so its check had passed.
+    Executor.new(run).send(:advance!, first.id)
+    CheckedRun.check = ->(r, _records) { r.reject("would reject") }
+    run.update!(state: "pending")
+
+    execute!(run)
+
+    assert_equal "completed", run.state
+    assert_nil CheckedRun.checked
+    assert_equal [second.id], ScriptedRun.performed
+  end
+
+  test "a check declared with required keywords names the expected signature" do
+    post = create_post!(user: @user, organization: @org)
+
+    run = execute!(create_run!(KeywordCheckRun, target_ids: [post.id]))
+
+    assert_equal "failed", run.state
+    assert_match(/KeywordCheckRun#pre_check must take the records/, messages(run).first)
+    assert_empty ScriptedRun.performed
+  end
+
+  test "an opaque run whose check takes records names the opaque signature" do
+    run = execute!(RecordsCheckOpaqueRun.create!(initiator: @user, scoped_entity: @org))
+
+    assert_equal "failed", run.state
+    assert_match(/RecordsCheckOpaqueRun#pre_check must take no arguments/, messages(run).first)
+  end
+
+  test "a rejection keeps the unresolved entry recorded before it" do
+    post = create_post!(user: @user, organization: @org)
+    CheckedRun.check = ->(run, _records) { run.reject("no") }
+
+    run = execute!(create_run!(CheckedRun, target_ids: [post.id, post.id + 10_000]))
+
+    assert_equal "rejected", run.outcome
+    assert_equal 2, run.errors_log.size
+    assert_includes messages(run), "no"
+    assert(run.errors_log.any? { |entry| entry["target_id"].to_s == (post.id + 10_000).to_s })
+    assert_empty ScriptedRun.performed
+  end
+
+  test "supersession during the check abandons the run instead of failing it" do
+    CheckedOpaqueRun.check = lambda do |run|
+      run.class.where(id: run.id).update_all("lock_version = lock_version + 1")
+      run.heartbeat!
+    end
+
+    run = execute!(CheckedOpaqueRun.create!(initiator: @user, scoped_entity: @org))
+
+    assert_equal "running", run.reload.state
+    assert_empty run.errors_log
+    assert_equal 0, CheckedOpaqueRun.calls
   end
 
   private

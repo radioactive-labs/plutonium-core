@@ -19,7 +19,7 @@ For everything about the interaction itself (inputs, validation, outcomes, `exec
 - **Permissions are re-derived at perform time, never replayed from dispatch.** The job rebuilds `(initiator, tenant)` from the row and re-checks the policy scope and predicate per target, immediately before each `perform_on`. A permission revoked mid-run stops applying to what's left. Both failure directions (scope, predicate) fail closed (refuse/report), never open.
 - **Register `Run` as a resource per portal.** Its show page IS the progress page, and other resources' index pages get a "runs in progress" banner for free. Nothing renders without registration.
 - **Read `outcome`, never bare `state`, when displaying a run's result.** A `:continue` run that under-applied still has `state == "completed"`; only `outcome` says `"completed_with_errors"`.
-- **Long work must call `heartbeat!`.** `stall_after` measures SILENCE, and the executor only writes per target, so opaque `perform` writes nothing at all between claim and finish. An opaque run longer than `stall_after` is reaped and, having no `handled_target_ids`, re-run from scratch. Call `heartbeat!` inside the loop. It also raises `StaleObjectError` if another worker took the run over, which for opaque work is the only way to find out.
+- **Long work must call `heartbeat!`.** `stall_after` measures SILENCE, and the executor only writes per target, so opaque `perform` writes nothing at all between claim and finish. The same holds for `pre_check`. An opaque run longer than `stall_after` is reaped and, having no `handled_target_ids`, re-run from scratch. Call `heartbeat!` inside the loop. It also raises `StaleObjectError` if another worker took the run over, which for opaque work is the only way to find out.
 - **A crashed/stalled run does not auto-heal.** Nothing revisits a `"running"` row on its own. `pu:async_interactions:install` schedules `Plutonium::Interaction::Async::ReapJob` for you when Solid Queue is in the bundle; otherwise (or on another scheduler) you must schedule it yourself. Unscheduled, a crash mid-batch leaves that row stuck forever.
 
 ---
@@ -114,6 +114,44 @@ end
 
 `backend:` and `uploader:` come off the attribute's `input` declaration, exactly as in a wizard step: `input :import_file, as: :uppy, uploader: Catalog::ImportUploader`. The uploader's `Attacher.validate` rules run when the interaction validates, so a bad file **fails the form** rather than surfacing as a run failure the submitter never sees. Where no `backend:` is declared: `config.async_interactions.attachment_backend` → `config.attachment_backend` → auto-detect.
 
+## Checking input before processing (`pre_check`)
+
+For checks too slow for the request (every row of a large file, lookups per row), define `pre_check` in the run. It runs in the job before any work; `reject` records a problem and keeps going (`return` yourself where nothing after it makes sense):
+
+```ruby
+# require "csv" at the top of the file
+async do
+  def pre_check                     # targeted runs: def pre_check(records)
+    each_row do |row, line|
+      reject "line #{line}: title is missing" if row["title"].blank?
+    end
+  rescue CSV::MalformedCSVError => e
+    reject "the file is not valid CSV: #{e.message}"
+  end
+
+  def perform                       # one transaction: an opaque run restarts from scratch after a reap
+    Task.transaction { each_row { |row, _line| Task.create!(title: row["title"]) } }
+  end
+
+  private
+
+  # Whole file, UTF-8, BOM stripped: the stored file comes back as binary.
+  def each_row
+    text = attachment(:import_file).download.force_encoding(Encoding::UTF_8).delete_prefix("\uFEFF")
+    CSV.parse(text, headers: true).each.with_index(2) do |row, line|   # header is line 1
+      yield row, line unless row.fields.all?(&:blank?)
+    end
+  end
+end
+```
+
+- Any rejection: run ends `failed`, `outcome == "rejected"`, problems on the progress page, no work done.
+- An exception in `pre_check` is a plain `failed`, not `rejected`. A wrong-arity `pre_check` fails the run naming the expected signature.
+- `config.async_interactions.max_rejections` (default 100) caps stored problems; the rest become one "and N more problems were found" entry.
+- It re-runs on resume, so it must only read (a resumed targeted run skips it once a target was applied). Long checks must `heartbeat!`.
+- `reject` outside `pre_check` raises.
+- Full version: `docs/reference/behavior/async-interactions.md`, "Checking input before processing".
+
 ## Registering the Run resource
 
 Use the generator, per portal. Never hand-write the route/controller:
@@ -144,7 +182,7 @@ Registering gets you, for free:
 
 - **Progress page.** The show page IS the progress page, self-polling while `pending`/`running`, and stops carrying the poll once settled (a finished run is a static page, not an eternal background request per viewer).
 - **Self-refreshing index.** The runs index polls on the same terms, one frame around the whole collection, armed only while some run is still working. One request per interval whatever the page size, and it re-fetches the current URL so filters, sort and page survive. No action needed on your part.
-- **Running banner.** Any OTHER registered resource's index lists in-progress runs targeting it, above the collection, scoped through the same `authorized_resource_scope` every cross-resource read uses (a run in another tenant can't surface). If a `resource_class` is registered in a portal that never registered `Run`, the banner is skipped there instead of raising while building a link to a nonexistent route. No action needed on your part.
+- **Running banner.** Any OTHER registered resource's index lists in-progress runs targeting it, above the collection, plus the viewer's own runs that finished within `config.async_interactions.recent_runs_window` (default 10 minutes, at most 5) with their outcome, so a fast or rejected run is still visible after the dispatch redirects back to the index. Both are scoped through the same `authorized_resource_scope` every cross-resource read uses (a run in another tenant can't surface). If a `resource_class` is registered in a portal that never registered `Run`, the banner is skipped there instead of raising while building a link to a nonexistent route. No action needed on your part.
 - **`interaction_label`.** A block-declared run (`<Interaction>::Run`) is titled by its interaction's label (`"Archive all (async) #19"`): its `presents label:`, else the class name without the `Interaction` suffix. A standalone run class falls back to its own name. An action-level `label:` or `plutonium.actions.*` translation does NOT reach the run (it does not know which action started it), so label the interaction with `presents label:` when the button and the run should match. The show page/table read `interaction_label` rather than the STI `type`.
 - **`target_label`.** The show page/table read `run.target_label` (`model_name.human`, e.g. `"Post"`) rather than the raw `target_type` string (`"Blogging::Post"`).
 - **Tenant scoping via `associated_with`.** Filters on the tenant the run was dispatched in (recorded on the row), because the two tenant columns are polymorphic and the generic object-graph scope can't walk them.

@@ -55,7 +55,7 @@ class AdminPortal::AsyncRunBannerTest < ActionDispatch::IntegrationTest
     assert_match(/data-run-id="#{run.id}"/, response.body)
   end
 
-  test "settled runs are not listed" do
+  test "settled runs someone else started, long finished or never stamped, are not listed" do
     completed = create_run!(state: "completed", progress_total: 1, progress_done: 1)
     failed = create_run!(state: "failed")
 
@@ -63,6 +63,59 @@ class AdminPortal::AsyncRunBannerTest < ActionDispatch::IntegrationTest
     refute_match(/data-run-id="#{completed.id}"/, response.body,
       "a finished run belongs in the run index, not on top of this one")
     refute_match(/data-run-id="#{failed.id}"/, response.body)
+  end
+
+  # A run settles while its dispatcher is already back on this index: a
+  # pre_check rejection or a short run finishes in milliseconds. Listing only
+  # in-progress runs left that user with no sign of what happened.
+  test "your own run that finished recently is listed with its outcome" do
+    run = create_run!(initiator: @admin, state: "failed", finished_at: 1.minute.ago,
+      errors_log: [{"target_id" => nil, "message" => "line 3: title is missing", "stage" => "pre_check"}])
+
+    get POSTS_INDEX
+
+    assert_match(/data-run-id="#{run.id}"/, response.body)
+    assert_match(/pu-badge-warning[^>]*>\s*Rejected\s*</, response.body)
+    assert_match(/View run/, response.body)
+  end
+
+  test "your own run that finished outside the window is not listed" do
+    run = create_run!(initiator: @admin, state: "completed", finished_at: 1.hour.ago)
+
+    get POSTS_INDEX
+
+    refute_match(/data-run-id="#{run.id}"/, response.body)
+  end
+
+  # Everyone's in-progress runs are listed; finished ones are only news to the
+  # person who started them.
+  test "someone else's recently finished run is not listed" do
+    run = create_run!(state: "completed", finished_at: 1.minute.ago)
+
+    get POSTS_INDEX
+
+    refute_match(/data-run-id="#{run.id}"/, response.body)
+  end
+
+  test "the window is configurable" do
+    config = Plutonium.configuration.async_interactions
+    previous = config.recent_runs_window
+    config.recent_runs_window = 2.hours
+    run = create_run!(initiator: @admin, state: "completed", finished_at: 1.hour.ago)
+
+    get POSTS_INDEX
+
+    assert_match(/data-run-id="#{run.id}"/, response.body)
+  ensure
+    config.recent_runs_window = previous
+  end
+
+  test "an in-progress run still offers its progress page" do
+    create_run!(state: "running", progress_total: 4, progress_done: 1)
+
+    get POSTS_INDEX
+
+    assert_match(/View progress/, response.body)
   end
 
   test "a run targeting a different resource is not listed" do

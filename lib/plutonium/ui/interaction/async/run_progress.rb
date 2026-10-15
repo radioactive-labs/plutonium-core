@@ -43,6 +43,8 @@ module Plutonium
             "running" => "info",
             "completed" => "success",
             "completed_with_errors" => "warning",
+            # The input was refused, nothing broke: see Run#rejected?.
+            "rejected" => "warning",
             "failed" => "danger"
           }.freeze
 
@@ -83,7 +85,9 @@ module Plutonium
             div(class: "pu-card pu-run-progress", **poll_attributes) do
               div(class: "pu-card-body space-y-4") do
                 render_status
-                render_progress
+                # A rejected run never started: an empty progress line beside
+                # "Nothing was processed" would say the same thing twice.
+                run.rejected? ? render_rejected : render_progress
                 render_failures if run.errors_log.any?
               end
             end
@@ -123,12 +127,21 @@ module Plutonium
               # The count rides alongside the badge rather than only in the list
               # below: a partially-applied :continue run ends as "completed", and
               # the one thing a reader must not be able to miss is that it did not
-              # do everything it was asked to.
+              # do everything it was asked to. Muted, because the alert below
+              # carries the colour (danger or warning) for what the problems mean.
               if run.error_count.positive?
-                span(class: "text-xs font-medium text-[var(--pu-text-danger)]") do
+                span(class: "text-xs font-medium text-[var(--pu-text-muted)]") do
                   plain t("plutonium.async.progress.error_count", count: run.error_count)
                 end
               end
+            end
+          end
+
+          # In place of the progress line: "0 of 50 targets" reads as a run that
+          # died at its first target. A rejected run never started, and says so.
+          def render_rejected
+            div(class: "text-xs text-[var(--pu-text-muted)]") do
+              plain t("plutonium.async.progress.rejected")
             end
           end
 
@@ -201,18 +214,19 @@ module Plutonium
             ((Time.current - started) * 1000).to_i % SWEEP_DURATION_MS
           end
 
+          # The framework's inline alert, so the problems read like every other
+          # message Plutonium shows rather than as a panel of their own.
           def render_failures
-            div(class: "space-y-1") do
-              div(class: "text-[10px] font-semibold uppercase tracking-wider text-[var(--pu-text-muted)]") do
-                plain t("plutonium.async.progress.failures")
-              end
-              ul(class: "pu-run-progress-failures text-xs space-y-1") do
-                run.errors_log.each do |entry|
-                  li(class: "text-[var(--pu-text-danger)]") { plain failure_text(entry) }
-                end
+            div(class: "pu-alert pu-alert-#{failures_variant} pu-run-progress-failures", role: "alert") do
+              ul(class: "pu-alert-message") do
+                run.errors_log.each { |entry| li { plain failure_text(entry) } }
               end
             end
           end
+
+          # Danger only for a run that broke. Refused input (rejected) and partial
+          # application (completed_with_errors) are warnings, matching the badge.
+          def failures_variant = (run.outcome == "failed") ? "danger" : "warning"
 
           # A nil target_id is the RUN-LEVEL sentinel (see AsyncRun#record_target_failure!),
           # not a target whose id happens to be blank.

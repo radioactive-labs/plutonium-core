@@ -81,6 +81,27 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     refute build(TestOpaqueRun).targeted?
   end
 
+  test "any_target_applied? is false for a fresh run" do
+    refute build(target_ids: %w[1 2]).any_target_applied?
+  end
+
+  test "any_target_applied? is false when every handled id has an errors_log entry" do
+    run = build(target_ids: %w[1 2])
+    run.save!
+    run.record_target_failure!(id: "1", message: "boom")
+
+    refute run.any_target_applied?
+  end
+
+  test "any_target_applied? is true when a handled id has no errors_log entry" do
+    run = build(target_ids: %w[1 2])
+    run.save!
+    run.record_target_failure!(id: "1", message: "boom")
+    run.update!(handled_target_ids: run.handled_target_ids + ["2"])
+
+    assert run.any_target_applied?
+  end
+
   test "heartbeat! refreshes the stall clock without bumping lock_version" do
     run = build(TestOpaqueRun, state: "running", last_activity_at: 3.hours.ago)
     run.save!
@@ -296,5 +317,101 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
       klass = Class.new(Plutonium::Interaction::Async::Run) { on_failure policy }
       assert_equal policy, klass.failure_policy
     end
+  end
+
+  # --- pre_check rejections -------------------------------------------------
+
+  def with_max_rejections(limit)
+    config = Plutonium.configuration.async_interactions
+    previous = config.max_rejections
+    config.max_rejections = limit
+    yield
+  ensure
+    config.max_rejections = previous
+  end
+
+  test "max_rejections defaults to 100" do
+    assert_equal 100, Plutonium::Interaction::Async::Configuration.new.max_rejections
+  end
+
+  # A rejection outside the check would be collected by nothing and lost.
+  test "reject outside a check raises" do
+    error = assert_raises(Plutonium::Interaction::Async::Run::RejectOutsidePreCheckError) { build.reject("bad row") }
+    assert_match(/only available inside pre_check/, error.message)
+  end
+
+  test "collect_rejections returns the messages and how many went past the cap" do
+    run = build
+
+    messages, overflow = with_max_rejections(2) do
+      run.collect_rejections { 5.times { |i| run.reject("row #{i}") } }
+    end
+
+    assert_equal ["row 0", "row 1"], messages
+    assert_equal 3, overflow
+  end
+
+  test "reject is closed again once the check is over" do
+    run = build
+    run.collect_rejections { run.reject("inside") }
+
+    assert_raises(Plutonium::Interaction::Async::Run::RejectOutsidePreCheckError) { run.reject("after") }
+  end
+
+  test "reject is closed again when the check raises" do
+    run = build
+    assert_raises(RuntimeError) { run.collect_rejections { raise "unreadable file" } }
+
+    assert_raises(Plutonium::Interaction::Async::Run::RejectOutsidePreCheckError) { run.reject("after") }
+  end
+
+  test "reject_run! records tagged entries and fails the run in one write" do
+    run = build(TestOpaqueRun)
+    run.save!
+
+    statements = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      statements << payload[:sql] if payload[:sql].start_with?("UPDATE")
+    end
+    begin
+      run.reject_run!(["line 2: missing email", "line 9: missing email"], overflow: 0)
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
+
+    assert_equal 1, statements.size, "entries and state must land together"
+    run.reload
+    assert_equal "failed", run.state
+    refute_nil run.finished_at
+    assert_equal ["line 2: missing email", "line 9: missing email"], run.errors_log.map { |e| e["message"] }
+    assert(run.errors_log.all? { |e| e["stage"] == "pre_check" && e["target_id"].nil? })
+    assert_equal 0, run.progress_done
+  end
+
+  test "reject_run! adds one entry for the problems past the cap" do
+    run = build(TestOpaqueRun)
+    run.save!
+
+    run.reject_run!(["line 2: missing email"], overflow: 4_900)
+
+    last = run.reload.errors_log.last
+    assert_equal "and 4900 more problems were found", last["message"]
+    assert_equal "pre_check", last["stage"]
+  end
+
+  test "a run rejected by its check reads rejected, not failed" do
+    run = build(TestOpaqueRun, state: "failed",
+      errors_log: [{"target_id" => nil, "message" => "bad header", "stage" => "pre_check"}])
+
+    assert_equal "rejected", run.outcome
+    assert run.rejected?
+  end
+
+  test "a failed run without check entries still reads failed" do
+    run = build(TestOpaqueRun, state: "failed",
+      errors_log: [{"target_id" => nil, "message" => "boom"}])
+
+    assert_equal "failed", run.outcome
+    refute run.rejected?
   end
 end

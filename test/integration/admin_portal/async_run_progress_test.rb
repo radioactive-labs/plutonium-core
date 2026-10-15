@@ -323,4 +323,70 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
     # a frame the operator had scoped to something else.
     assert_match(/data-run-progress-url-value="[^"]*\/admin\/async_runs\?page=1"/, response.body)
   end
+
+  def rejection(message) = {"target_id" => nil, "message" => message, "stage" => "pre_check"}
+
+  test "a rejected run says so, says nothing was processed, and lists every problem" do
+    run = create_run!(state: "failed", progress_total: 3, progress_done: 0,
+      errors_log: [rejection("line 2: missing email"), rejection("line 7: missing email")])
+
+    get run_path(run)
+    assert_response :success
+
+    assert_match(/pu-badge-warning[^>]*>\s*Rejected\s*</, response.body)
+    refute_match(/pu-badge-danger[^>]*>\s*Rejected/, response.body)
+    assert_match(/Nothing was processed/, response.body)
+    assert_match(/line 2: missing email/, response.body)
+    assert_match(/line 7: missing email/, response.body)
+  end
+
+  # The amber badge says the input was refused; nothing on the panel should
+  # read as a crash, and an empty progress line next to "Nothing was processed"
+  # says the same thing twice.
+  test "a rejected run's panel drops the progress line" do
+    run = create_run!(state: "failed", progress_total: nil,
+      errors_log: [rejection("line 2: missing email")])
+
+    get run_path(run)
+
+    refute_match(/No progress total was recorded/, response.body)
+    assert_match(/1 error/, response.body)
+  end
+
+  # The problems are listed in the framework's inline alert, coloured by what
+  # they mean: refused input or partial application is a warning, a run that
+  # broke is danger.
+  test "a rejected run lists its problems in a warning alert" do
+    run = create_run!(state: "failed", errors_log: [rejection("line 2: missing email")])
+
+    get run_path(run)
+
+    assert_match(/class="pu-alert pu-alert-warning pu-run-progress-failures"[^>]*>.*line 2: missing email/m, response.body)
+  end
+
+  test "a run that failed while working lists its problems in a danger alert" do
+    run = create_run!(state: "failed", errors_log: [{"target_id" => nil, "message" => "boom"}])
+
+    get run_path(run)
+
+    assert_match(/class="pu-alert pu-alert-danger pu-run-progress-failures"[^>]*>.*boom/m, response.body)
+    refute_match(/Nothing was processed/, response.body)
+  end
+
+  test "a run that completed with errors lists them in a warning alert" do
+    run = create_run!(state: "completed", progress_total: 2, progress_done: 2,
+      errors_log: [{"target_id" => 7, "message" => "locked"}])
+
+    get run_path(run)
+
+    assert_match(/class="pu-alert pu-alert-warning pu-run-progress-failures"[^>]*>.*#7: locked/m, response.body)
+  end
+
+  test "the index shows a rejected run as rejected" do
+    create_run!(state: "failed", errors_log: [rejection("bad header")])
+
+    get "/admin/async_runs"
+
+    assert_match(/pu-badge-warning[^>]*>\s*Rejected\s*</, response.body)
+  end
 end

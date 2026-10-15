@@ -52,6 +52,12 @@ class TaskPolicy < ::ResourcePolicy
     update?
   end
 
+  # Resource action: a CSV import dispatched to a run whose pre_check checks
+  # the whole file first.
+  def import_tasks?
+    create?
+  end
+
   # Core actions
 
   # Set deny_create = true in integration tests to exercise the "+ Add" hidden path.

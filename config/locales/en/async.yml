@@ -11,6 +11,7 @@ en:
         progress: "%{done} / %{total}"
         target_type: "Target type"
         enqueue_failed: "could not be enqueued for execution"
+        reject_outside_pre_check: "%{run_class}#reject is only available inside pre_check"
       executor:
         target_missing: "Target %{id} is no longer available"
         target_unauthorized: "Target %{id} is no longer permitted by %{action}"
@@ -19,6 +20,12 @@ en:
           one: "stopped at the first target failure (%{policy} policy); %{count} target was not attempted"
           other: "stopped at the first target failure (%{policy} policy); %{count} targets were not attempted"
         partial_batch_refused: "%{unresolved} of %{total} targets could not be resolved; a %{policy} run does not apply a partial batch"
+        pre_check_arity:
+          targeted: "%{run_class}#pre_check must take the records: define pre_check(records) on a run with perform_on"
+          opaque: "%{run_class}#pre_check must take no arguments: define pre_check on a run with perform"
+        rejections_truncated:
+          one: "and %{count} more problem was found"
+          other: "and %{count} more problems were found"
       context:
         initiator_missing: "run %{run} has no initiator (%{type}#%{id} no longer exists)"
         tenant_missing: "run %{run} was scoped to %{type}#%{id}, which no longer exists; refusing to resolve targets without a tenant"
@@ -27,10 +34,11 @@ en:
         targets: "%{done} of %{total} targets (%{percent}%)"
         working: "Working…"
         no_total: "No progress total was recorded"
-        failures: "Failures"
         error_count:
           one: "%{count} error"
           other: "%{count} errors"
         target_failure: "#%{target_id}: %{message}"
+        rejected: "Nothing was processed"
       banner:
         view_progress: "View progress"
+        view_run: "View run"

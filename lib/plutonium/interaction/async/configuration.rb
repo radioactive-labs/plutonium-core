@@ -27,10 +27,25 @@ module Plutonium
         #   This is the knob for which backend does that, for runs alone.
         attr_accessor :attachment_backend
 
+        # @return [Integer] how many pre_check rejections a run stores. The rest
+        #   are counted and reported as one "and N more" entry, so a file that is
+        #   bad on every row cannot write tens of thousands of entries into the
+        #   errors_log column (and onto the progress page). Must be a positive Integer.
+        attr_accessor :max_rejections
+
+        # @return [ActiveSupport::Duration] how long a run stays in the running
+        #   banner after it finishes, for the user who started it. A dispatch
+        #   sends that user back to the index, and a short run (or one its
+        #   pre_check rejected) settles before the page loads; without this it
+        #   would never show there at all.
+        attr_accessor :recent_runs_window
+
         def initialize
           @enabled = false
           @queue = :default
           @stall_after = 1.hour
+          @max_rejections = 100
+          @recent_runs_window = 10.minutes
         end
       end
     end

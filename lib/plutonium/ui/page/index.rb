@@ -4,6 +4,11 @@ module Plutonium
   module UI
     module Page
       class Index < Base
+        # How many recently finished runs the running banner lists at most. It
+        # sits above the collection; a burst of dispatches must not push the
+        # collection off the screen. The run index has the rest.
+        RECENT_RUNS_LIMIT = 5
+
         # Cookie name carrying a per-resource view preference. Single
         # source of truth — Table::Resource, Grid::Resource, and the
         # Stimulus view-switcher controller all read from here. Underscored
@@ -101,12 +106,26 @@ module Plutonium
           # a URL for a route that doesn't exist here.
           return unless registered_resources.include?(Plutonium::Interaction::Async::Run)
 
-          runs = authorized_resource_scope(
-            Plutonium::Interaction::Async::Run,
-            relation: Plutonium::Interaction::Async::Run.for_target(resource_class).in_progress
+          run_class = Plutonium::Interaction::Async::Run
+          in_progress = authorized_resource_scope(
+            run_class, relation: run_class.for_target(resource_class).in_progress
           ).to_a
 
-          render Plutonium::UI::Interaction::Async::RunningBanner.new(runs: runs)
+          # The current user's own runs that settled moments ago. A dispatch
+          # sends them back here, and a short run (or one its pre_check rejected)
+          # finishes before this page renders, so "in progress" alone would show
+          # them nothing. Only their own: someone else's finished run is not news.
+          recent = authorized_resource_scope(
+            run_class,
+            relation: run_class.for_target(resource_class)
+              .where(initiator: current_user)
+              .finished_since(Plutonium.configuration.async_interactions.recent_runs_window.ago)
+              .order(finished_at: :desc)
+              .limit(RECENT_RUNS_LIMIT)
+          ).to_a
+
+          # uniq: a run that finishes between the two queries is in both.
+          render Plutonium::UI::Interaction::Async::RunningBanner.new(runs: (in_progress + recent).uniq)
         end
 
         def selected_view

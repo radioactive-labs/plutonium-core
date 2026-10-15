@@ -1222,6 +1222,15 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   margin-left: var(--pu-drag-marker-gap, 4px);
 }
 
+/* The failures on an async run's progress panel: an inline alert holding a
+   list, so it sits flush in the card and the list keeps its bullets. */
+.pu-run-progress-failures {
+  @apply mb-0 items-start;
+}
+.pu-run-progress-failures .pu-alert-message {
+  @apply ms-0 ps-4 list-disc space-y-1;
+}
+
 /* Indeterminate progress for an async run with no denominator (opaque work).
    A short segment sweeping the track: the motion is what says "alive", which a
    static bar at any width cannot, and a full-width bar would misread as done. */

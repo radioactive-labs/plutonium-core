@@ -1,0 +1,49 @@
+{
+  "planPath": "docs/superpowers/plans/2026-10-15-async-run-pre-check.md",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 1: Run model: reject, reject_run!, rejected outcome, max_rejections",
+      "status": "completed",
+      "description": "**Goal:** `Run` can collect rejections during a check, persist them in one write, and report `outcome == \"rejected\"`.\n\n**Files:**\n- Modify: `lib/plutonium/interaction/async/configuration.rb`\n- Modify: `lib/plutonium/interaction/async/run.rb`\n- Modify: `config/locales/en/async.yml`\n- Test: `test/plutonium/interaction/async/run_test.rb`\n\n**Acceptance Criteria:**\n- [ ] `config.async_interactions.max_rejections` defaults to 100.\n- [ ] `reject` raises outside `collect_rejections`; inside, it stores up to `max_rejections` messages and counts the rest.\n- [ ] `reject_run!(messages, overflow:)` writes entries tagged `\"stage\" => \"pre_check\"`, a truncation entry when `overflow > 0`, and `state: \"failed\"` in a single UPDATE.\n- [ ] `outcome` is `\"rejected\"` for a failed run with a tagged entry; untagged failed runs still read `\"failed\"`.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/async/run_test.rb` \u2192 0 failures, 0 errors\n\nSee plan section 'Task 1: Run model: reject, reject_run!, rejected outcome, max_rejections' for steps.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/async/configuration.rb\", \"lib/plutonium/interaction/async/run.rb\", \"config/locales/en/async.yml\", \"test/plutonium/interaction/async/run_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/async/run_test.rb\", \"acceptanceCriteria\": [\"max_rejections defaults to 100\", \"reject raises outside collect_rejections and caps stored messages\", \"reject_run! writes tagged entries and failed in one UPDATE\", \"outcome reads rejected only for tagged failed runs\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 2: Executor runs the check before the work",
+      "status": "completed",
+      "description": "**Goal:** The executor calls `pre_check` with the right arguments for the run's shape and stops before any work when it rejects.\n\n**Files:**\n- Modify: `lib/plutonium/interaction/async/executor.rb` (`perform_opaque`, `perform_targets`, new private methods)\n- Modify: `config/locales/en/async.yml`\n- Test: `test/plutonium/interaction/async/executor_test.rb`\n\n**Acceptance Criteria:**\n- [ ] Opaque and targeted runs whose check rejects nothing perform as before.\n- [ ] A rejection stops `perform` / `perform_on`; `progress_done` stays 0; `outcome == \"rejected\"`.\n- [ ] Every rejection is recorded; past `max_rejections`, one \"and N more\" entry with the exact remainder.\n- [ ] An exception raised in `pre_check` reads `failed`, not `rejected`.\n- [ ] A wrong-arity `pre_check` fails the run with a message naming the class and expected signature.\n- [ ] A resumed targeted run's check receives only the unhandled records.\n- [ ] A `:transactional` run is rejected without opening a transaction.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/async/executor_test.rb` \u2192 0 failures, 0 errors\n\nSee plan section 'Task 2: Executor runs the check before the work' for steps.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/async/executor.rb\", \"config/locales/en/async.yml\", \"test/plutonium/interaction/async/executor_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/async/executor_test.rb\", \"acceptanceCriteria\": [\"passing checks perform as before\", \"rejection stops work, progress_done 0, outcome rejected\", \"cap with exact remainder\", \"exception in check reads failed\", \"wrong arity names expected signature\", \"resumed run checks remaining records only\", \"transactional rejection opens no batch transaction\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        0
+      ]
+    },
+    {
+      "id": 2,
+      "subject": "Task 3: Show rejected runs on the progress page and index",
+      "status": "completed",
+      "description": "**Goal:** A rejected run shows a warning \"Rejected\" badge, a \"Nothing was processed\" line, and its messages.\n\n**Files:**\n- Modify: `lib/plutonium/ui/interaction/async/run_progress.rb` (`BADGE_VARIANTS`, `render_panel`, new `render_rejected`)\n- Modify: `lib/plutonium/interaction/async/run_definition.rb` (both `colors:` hashes)\n- Modify: `config/locales/en/async.yml`\n- Test: `test/integration/admin_portal/async_run_progress_test.rb`\n\n**Acceptance Criteria:**\n- [ ] The show page renders a `pu-badge-warning` badge reading \"Rejected\", the line \"Nothing was processed\", and every rejection message.\n- [ ] A plain failed run does not show \"Nothing was processed\".\n- [ ] The index renders \"Rejected\" for the run.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/async_run_progress_test.rb` \u2192 0 failures, 0 errors\n\nSee plan section 'Task 3: Show rejected runs on the progress page and index' for steps.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/interaction/async/run_progress.rb\", \"lib/plutonium/interaction/async/run_definition.rb\", \"config/locales/en/async.yml\", \"test/integration/admin_portal/async_run_progress_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/async_run_progress_test.rb\", \"acceptanceCriteria\": [\"warning Rejected badge, Nothing was processed, all messages on show page\", \"plain failed run lacks the line\", \"index shows Rejected\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        0
+      ]
+    },
+    {
+      "id": 3,
+      "subject": "Task 4: Dummy CSV import with a pre_check, end to end",
+      "status": "completed",
+      "description": "**Goal:** A real interaction in the dummy app exercises dispatch \u2192 staged file \u2192 pre_check \u2192 rejected or completed, and backs the docs example.\n\n**Files:**\n- Create: `test/dummy/app/interactions/import_tasks_interaction.rb`\n- Modify: `test/dummy/app/policies/task_policy.rb` (after `archive_all_async?`)\n- Modify: `test/dummy/app/definitions/task_definition.rb` (after `action :archive_all_async`)\n- Create: `test/integration/admin_portal/async_import_pre_check_test.rb`\n\n**Acceptance Criteria:**\n- [ ] Posting a CSV with bad rows creates a run that, once executed, reads `rejected`, lists one message per bad row, and creates no tasks.\n- [ ] Posting a valid CSV creates the tasks and the run reads `completed`.\n- [ ] The rejected run's progress page shows the badge and messages.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/async_import_pre_check_test.rb` \u2192 0 failures, 0 errors\n\nSee plan section 'Task 4: Dummy CSV import with a pre_check, end to end' for steps.\n\n```json:metadata\n{\"files\": [\"test/dummy/app/interactions/import_tasks_interaction.rb\", \"test/dummy/app/models/task.rb\", \"test/dummy/app/policies/task_policy.rb\", \"test/dummy/app/definitions/task_definition.rb\", \"test/integration/admin_portal/async_import_pre_check_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/async_import_pre_check_test.rb\", \"acceptanceCriteria\": [\"bad CSV rejected whole with one message per bad row and no tasks\", \"valid CSV imported and completed\", \"progress page shows Rejected and messages\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": 4,
+      "subject": "Task 5: Docs and skill",
+      "status": "completed",
+      "description": "**Goal:** The reference doc and the shipped skill explain `pre_check`, `reject`, the `rejected` outcome, `max_rejections`, and the heartbeat requirement, with samples that match the dummy app.\n\n**Files:**\n- Modify: `docs/reference/behavior/async-interactions.md`\n- Modify: `.claude/skills/plutonium-async-interactions/SKILL.md`\n\n**Acceptance Criteria:**\n- [ ] A \"Checking input before processing\" section after \"### Files\" in the doc, and after \"## Attributes and files\" in the skill.\n- [ ] `max_rejections` in the doc's Enabling config block.\n- [ ] \"Outcome vs state\" documents `rejected`.\n- [ ] Both heartbeat warnings mention `pre_check`.\n- [ ] No em dashes; samples match `ImportTasksInteraction`.\n- [ ] `yarn docs:build` passes.\n\n**Verify:** `yarn docs:build` \u2192 completes without dead-link errors\n\nSee plan section 'Task 5: Docs and skill' for steps.\n\n```json:metadata\n{\"files\": [\"docs/reference/behavior/async-interactions.md\", \".claude/skills/plutonium-async-interactions/SKILL.md\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"new section in doc and skill\", \"max_rejections in config block\", \"rejected in Outcome vs state\", \"heartbeat notes mention pre_check\", \"no em dashes\", \"docs build passes\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        3
+      ]
+    }
+  ],
+  "lastUpdated": "2026-10-15T04:38:35.300061+00:00"
+}

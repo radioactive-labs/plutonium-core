@@ -20,6 +20,10 @@ class TaskDefinition < ::ResourceDefinition
   # inline — the async counterpart of the kanban column's :archive_all.
   action :archive_all_async, interaction: ArchiveTasksAsyncInteraction
 
+  # Resource action, dispatched to a run that checks the whole file before
+  # importing any of it (see ImportTasksInteraction#pre_check).
+  action :import_tasks, interaction: ImportTasksInteraction
+
   kanban do
     per_column 25
 

@@ -190,6 +190,8 @@ module Plutonium
         # the framework is meant to call, and it must not change what the
         # executor does with it.
         def perform_opaque
+          return unless pre_check_passed?
+
           run.send(:perform)
           run.finish!
         end
@@ -199,6 +201,17 @@ module Plutonium
           record_unresolved(resolved)
 
           return refuse_partial_batch(resolved) if unresolved?(resolved) && !continue?
+
+          # A resumed run whose earlier pass already applied a target was
+          # approved by that pass's check: targets are only performed after it
+          # passes. Re-checking the remainder could reject a run that is
+          # half-applied and report "nothing was processed". Opaque runs restart
+          # from scratch, so they re-check.
+          #
+          # After record_unresolved, so a rejected :continue run still reports
+          # the targets that had gone; those count toward progress_done, though
+          # nothing was performed.
+          return unless run.any_target_applied? || pre_check_passed?(resolved.records)
 
           if transactional?
             perform_all_or_nothing(resolved.records)
@@ -215,6 +228,47 @@ module Plutonium
             # thing, which is what a retry — and the index banner — need.
             run.finish!
           end
+        end
+
+        # Runs the run's pre_check with #reject live, and fails the run with
+        # whatever it rejected. Before any work: a rejected run touches no
+        # target. Outside the :transactional batch, which never opens for a
+        # rejected run.
+        #
+        # An exception from the check is NOT a rejection. It propagates to #call
+        # and fails the run the ordinary way, so "your input is wrong" and "the
+        # check itself broke" stay distinguishable (Run#outcome).
+        #
+        # send, for the reason #perform_opaque gives.
+        #
+        # @return [Boolean] whether the work may go ahead
+        def pre_check_passed?(*args)
+          verify_pre_check_arity!(args.size)
+
+          messages, overflow = run.collect_rejections { run.send(:pre_check, *args) }
+          return true if messages.empty? && overflow.zero?
+
+          run.reject_run!(messages, overflow: overflow)
+          false
+        end
+
+        # A targeted check declared opaque-style (or the reverse) would raise a
+        # bare "wrong number of arguments" from inside the executor, naming
+        # neither the class nor the fix.
+        #
+        # Raised as NotImplementedError ("the run class is written wrong"), which
+        # #call records like any other failure.
+        def verify_pre_check_arity!(given)
+          params = run.method(:pre_check).parameters.group_by(&:first)
+          required = params.fetch(:req, []).size
+          positional = required + params.fetch(:opt, []).size
+          fits = params[:keyreq].nil? && required <= given && (params.key?(:rest) || positional >= given)
+          return if fits
+
+          raise NotImplementedError, I18n.t(
+            "plutonium.async.executor.pre_check_arity.#{run.targeted? ? "targeted" : "opaque"}",
+            run_class: run.class
+          )
         end
 
         # @return [Integer, nil] how many records were never attempted, if the

@@ -4,7 +4,9 @@ module Plutonium
   module UI
     module Interaction
       module Async
-        # Lists the runs currently working on THIS resource, above its collection.
+        # Lists the runs currently working on THIS resource, above its collection,
+        # followed by the viewer's own runs that finished within
+        # +recent_runs_window+ (see Page::Index#render_running_banner).
         #
         # == Why it exists
         #
@@ -16,8 +18,9 @@ module Plutonium
         #
         # +target_type+ is a real column rather than a key inside the +options+
         # JSON precisely so this predicate can be indexed — see the migration's own
-        # comment. An opaque run has no +target_type+ at all and therefore appears
-        # on no resource index: it belongs to no resource.
+        # comment. An opaque run dispatched from a resource still records that
+        # resource as its +target_type+, so it shows on that resource's index; one
+        # dispatched from nowhere has none and appears on no resource index.
         #
         # == Why it can render nothing
         #
@@ -51,11 +54,24 @@ module Plutonium
                 # own page renders the pair.
                 span(class: "font-medium text-[var(--pu-text)]") { plain run.to_label }
                 plain " "
-                span(class: "text-[var(--pu-text-muted)]") { plain(Plutonium::Translation.value_label(run.class, :state, run.state) || run.state.humanize) }
+                run.in_progress? ? render_state(run) : render_outcome(run)
               end
               a(href: resource_url_for(run), class: "pu-btn pu-btn-xs pu-btn-soft-primary shrink-0") do
-                plain t("plutonium.async.banner.view_progress")
+                plain t(run.in_progress? ? "plutonium.async.banner.view_progress" : "plutonium.async.banner.view_run")
               end
+            end
+          end
+
+          def render_state(run)
+            span(class: "text-[var(--pu-text-muted)]") { plain(Plutonium::Translation.value_label(run.class, :state, run.state) || run.state.humanize) }
+          end
+
+          # A finished run is listed for what it ended as, so outcome rather than
+          # state ("completed" hides a partial :continue run; "failed" hides a
+          # rejection), in the progress panel's colours.
+          def render_outcome(run)
+            span(class: "pu-badge pu-badge-#{RunProgress::BADGE_VARIANTS.fetch(run.outcome, "neutral")}") do
+              plain(Plutonium::Translation.value_label(run.class, :outcome, run.outcome) || run.outcome.humanize)
             end
           end
         end

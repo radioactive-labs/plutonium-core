@@ -3,6 +3,9 @@ class Task < ::ResourceRecord
 
   # add concerns above.
 
+  # A subset of the filter's statuses: lost, blocked and archived are states a
+  # task reaches, not ones it is imported into.
+  IMPORTABLE_STATUSES = %w[todo doing done review].freeze
   # add constants above.
 
   # add enums above.

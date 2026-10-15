@@ -26,6 +26,8 @@ Plutonium.configure do |config|
   config.async_interactions.enabled = true
   config.async_interactions.queue = :default        # ActiveJob queue for run jobs
   config.async_interactions.stall_after = 1.hour     # see Stalled runs, below
+  config.async_interactions.max_rejections = 100     # pre_check problems stored per run
+  config.async_interactions.recent_runs_window = 10.minutes  # finished runs stay in your banner this long
 end
 ```
 
@@ -123,6 +125,58 @@ Validating means staging first, since Shrine validates an assigned cached file, 
 
 Where no `backend:` is declared: `config.async_interactions.attachment_backend`, then `config.attachment_backend`, then auto-detection (active_shrine loaded → Shrine, else ActiveStorage). Same layering wizards use.
 
+### Checking input before processing
+
+Validations on the interaction run in the request, so they suit cheap checks (an uploader's size and type rules already fail the form there). A check too slow for a request, like reading every row of a large file, goes in the run's `pre_check`. It runs in the job, before any work, and refuses the input with `reject`:
+
+```ruby
+require "csv"
+
+class ImportTasks < ResourceInteraction
+  attribute :import_file
+  input :import_file, as: :file
+
+  async do
+    def pre_check
+      each_row do |row, line|
+        reject "line #{line}: title is missing" if row["title"].blank?
+      end
+    rescue CSV::MalformedCSVError => e
+      reject "the file is not valid CSV: #{e.message}"
+    end
+
+    # One transaction: an opaque run restarts from scratch after a reap, so a
+    # partial import would otherwise be imported twice.
+    def perform
+      Task.transaction { each_row { |row, _line| Task.create!(title: row["title"]) } }
+    end
+
+    private
+
+    # Read whole, as UTF-8 without Excel's byte-order mark: the stored file
+    # comes back as binary, and a BOM would become part of the first header.
+    def each_row
+      text = attachment(:import_file).download.force_encoding(Encoding::UTF_8).delete_prefix("\uFEFF")
+      CSV.parse(text, headers: true).each.with_index(2) do |row, line|
+        yield row, line unless row.fields.all?(&:blank?)
+      end
+    end
+  end
+end
+```
+
+Rows are numbered from 2 so a message matches the line a spreadsheet shows (the header is line 1), and blank lines are skipped without shifting the numbers after them. The dummy app's `ImportTasksInteraction` is the full version, with a column check, an empty-file check and status validation.
+
+- `reject` records a problem and returns, so one pass reports every bad row. It does not stop the check: `return` explicitly where nothing after it would make sense, such as a missing column.
+- If anything was rejected, the run ends `failed` with `outcome == "rejected"`, the problems listed on its progress page, and `perform` / `perform_on` never runs. The page shows a warning "Rejected" badge and "Nothing was processed". On a `:continue` run, targets that had gone missing or lost permission are recorded before the check runs, so they still appear in the list (and count toward `progress_done`) even though nothing was performed.
+- A run with `perform_on` declares `pre_check(records)` and receives the resolved, authorized records the loop is about to process. A `pre_check` with the wrong arity fails the run with a message naming the signature it expects.
+- An exception raised inside `pre_check` fails the run the ordinary way (`outcome == "failed"`): the check broke, the input was not judged.
+- `reject` called outside `pre_check` raises.
+- Only the first `config.async_interactions.max_rejections` problems (default 100) are stored, followed by one "and N more problems were found" entry.
+- The check runs again when a stalled run is resumed, so it must only read. An opaque run always re-checks. A resumed targeted run checks the records it has left, unless an earlier pass already applied a target (that pass's check passed, so it is not repeated).
+- A targeted check receives the records as loaded when the run resolved its targets. `perform_on` gets each record re-read just before it runs, so a verdict based on record state can be stale by then; re-check anything that must hold at the moment of the work inside `perform_on`.
+- A long check must call `heartbeat!` (see [Long work must say it is alive](#long-work-must-say-it-is-alive)).
+
 ### Sharing one run across interactions
 
 Pass a class instead of a block when several interactions do the same kind of work:
@@ -175,7 +229,9 @@ run.state    # "completed"
 run.outcome  # "completed_with_errors"   (state == "completed" && errors_log.any?)
 ```
 
-The progress page, the table's `outcome` column, and the running banner all render `outcome`, never bare `state`.
+A run whose `pre_check` rejected its input reads `outcome == "rejected"` (its `state` is `"failed"`, and nothing was processed). A run that failed while working reads `"failed"`.
+
+The progress page, the table's `outcome` column, and the running banner's entries for finished runs render `outcome`, never bare `state`.
 
 ## Registering the Run resource
 
@@ -207,7 +263,7 @@ A registered run resource gets, for free:
 
 - **A progress page.** The show page IS the progress page. It self-refreshes via polling (not ActionCable) while `state` is `pending`/`running`, and stops carrying the poll once the run settles, so a finished run is a static page, not a background request per viewer.
 - **A self-refreshing index.** The runs index polls on the same terms as the progress page: one frame around the whole collection, armed only while some run is still working, disarmed the moment none is. One request per interval regardless of page size, and it re-fetches the URL you are on, so filters, sort and page survive the refresh. A frame per row is not an option: `turbo-frame` is not in the content model of `tr`, so the parser hoists it out of the table before Turbo sees it.
-- **A running banner.** Any OTHER resource's index page lists runs currently in progress against it, above the collection, so a user who dispatched a bulk action and navigated away can find it again. Scoped through the same `authorized_resource_scope` every cross-resource read goes through, so a run in another tenant can never surface. If a resource_class is registered in a portal that never registered `Run`, the banner is skipped there instead of raising while trying to build a link to a route that doesn't exist.
+- **A running banner.** Any OTHER resource's index page lists runs currently in progress against it, above the collection, so a user who dispatched a bulk action and navigated away can find it again. It also lists the viewer's own runs that finished within `config.async_interactions.recent_runs_window` (default 10 minutes, newest first, at most 5), with their outcome and a "View run" link. A dispatch sends the user back to this index, and a short run, or one its `pre_check` rejected, has often finished before the page renders. Scoped through the same `authorized_resource_scope` every cross-resource read goes through, so a run in another tenant can never surface. If a resource_class is registered in a portal that never registered `Run`, the banner is skipped there instead of raising while trying to build a link to a route that doesn't exist.
 - **Tenant scoping.** A run's `associated_with` scope filters on the tenant it was dispatched in (recorded on the row), not on walking the object graph, since the two polymorphic tenant columns make the generic scope unusable.
 - **Runs named by their interaction.** A run declared with an `async` block is titled by its interaction's label ("Archive all (async) #19"), from `presents label:` or, without one, the class name minus its `Interaction` suffix. A standalone run class passed to `async` can be shared by several interactions, so it is named after its own class. Only `presents label:` reaches the run: a `label:` on the `action` declaration, or a `plutonium.actions.<model>.<action>` translation, renames the button but not the runs it starts, so put the label on the interaction when both should match.
 - **A humanized target label.** `run.target_label` reads the target class through `model_name.human` ("Post", not "Blogging::Post"), falling back to the raw string if that class has since been renamed or removed.
@@ -256,7 +312,7 @@ What bounds that is `lock_version`. Both the reaper's resume and the executor's 
 
 `stall_after` is a **silence** threshold, not a runtime limit. Every write the executor makes refreshes the clock, so a targeted run with quick targets heartbeats once per target for free. Two shapes get nothing, and both are exactly the "long-running task" case:
 
-- **Opaque work.** Between the claim and `finish!` the executor writes nothing, because there is nothing to count. A `perform` that outlives `stall_after` is reaped mid-flight and, having no `handled_target_ids` to resume from, re-runs **from scratch**.
+- **Opaque work, and any `pre_check`.** Between the claim and `finish!` the executor writes nothing, because there is nothing to count. A `perform` that outlives `stall_after` is reaped mid-flight and, having no `handled_target_ids` to resume from, re-runs **from scratch**.
 - **A single `perform_on`** that outlives `stall_after` on its own.
 
 Call `heartbeat!` from inside such work:

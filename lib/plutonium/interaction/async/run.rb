@@ -27,6 +27,15 @@ module Plutonium
         IN_PROGRESS_STATES = %w[pending running].freeze
         FAILURE_POLICIES = %i[halt continue transactional].freeze
 
+        # Tags the errors_log entries a pre_check rejection writes, which is what
+        # #outcome reads "rejected" from. A key in the existing JSON rather than a
+        # column: older entries simply lack it.
+        PRE_CHECK_STAGE = "pre_check"
+
+        # Raised by #reject called anywhere but inside pre_check, where nothing
+        # would collect the rejection.
+        class RejectOutsidePreCheckError < StandardError; end
+
         # Routes, paths and helpers are all derived from model_name, and the
         # default would spell the gem's own namespace out in every URL
         # (/admin/plutonium/interaction/runs) and every helper
@@ -65,6 +74,7 @@ module Plutonium
 
         scope :in_progress, -> { where(state: IN_PROGRESS_STATES) }
         scope :for_target, ->(klass) { where(target_type: klass.to_s) }
+        scope :finished_since, ->(time) { where.not(state: IN_PROGRESS_STATES).where(finished_at: time..) }
 
         # In progress with no recorded activity since +before+ — see
         # Async::ReapJob. +last_activity_at+ is nil until a job actually claims
@@ -130,8 +140,16 @@ module Plutonium
         #
         # @return [String]
         def outcome
+          return "rejected" if rejected?
+
           (state == "completed" && errors_log.any?) ? "completed_with_errors" : state
         end
+
+        # Failed because its pre_check refused the input, as opposed to failing
+        # while doing the work. Nothing was processed. state stays "failed", so
+        # every reader keyed on state (ReapJob, in_progress, the banner) is
+        # unaffected.
+        def rejected? = state == "failed" && errors_log.any? { |entry| entry["stage"] == PRE_CHECK_STAGE }
 
         # @return [Integer] recorded target failures, run-level entries included
         def error_count = errors_log.size
@@ -241,6 +259,53 @@ module Plutonium
           )
         end
 
+        # Fails the run with its pre_check's rejections, in ONE write, for the
+        # reason record_target_failures! gives: a crash between two writes must
+        # not leave a failed run without its reasons, or reasons on a run still
+        # marked running. Entries carry the run-level nil target_id, so progress
+        # and handled_target_ids are untouched: nothing was processed.
+        #
+        # @param messages [Array<String>] the rejections that were stored
+        # @param overflow [Integer] how many more were rejected past max_rejections
+        def reject_run!(messages, overflow: 0)
+          entries = messages.map { |message| pre_check_entry(message) }
+          entries << pre_check_entry(I18n.t("plutonium.async.executor.rejections_truncated", count: overflow)) if overflow.positive?
+
+          now = Time.current
+          update!(errors_log: errors_log + entries, state: "failed", finished_at: now, last_activity_at: now)
+        end
+
+        # Runs the block with #reject live, and closes it again afterwards.
+        # Called by Async::Executor around pre_check.
+        #
+        # @return [Array(Array<String>, Integer)] the stored messages, and how
+        #   many more were rejected past max_rejections
+        def collect_rejections
+          @rejections = []
+          @rejection_count = 0
+          yield
+          [@rejections, @rejection_count - @rejections.size]
+        ensure
+          @rejections = @rejection_count = nil
+        end
+
+        # Records one problem with the run's input and returns, so a check can
+        # report every bad row in one pass. Only live inside pre_check: a
+        # rejection from perform would be collected by nothing.
+        #
+        # Counts past max_rejections but stores no more than that, so memory
+        # stays bounded and the "and N more" count is exact.
+        #
+        # @param message [String]
+        # @return [void]
+        def reject(message)
+          raise RejectOutsidePreCheckError, I18n.t("plutonium.async.run.reject_outside_pre_check", run_class: self.class) if @rejections.nil?
+
+          @rejection_count += 1
+          @rejections << message.to_s if @rejections.size < Plutonium.configuration.async_interactions.max_rejections
+          nil
+        end
+
         # Target ids not yet dispositioned — what a resumed run still has to
         # do. See {#record_target_failures!} and Async::Executor#advance!, which
         # are what populate handled_target_ids.
@@ -249,6 +314,16 @@ module Plutonium
         def unhandled_target_ids
           handled = handled_target_ids.map(&:to_s).to_set
           target_ids.reject { |id| handled.include?(id.to_s) }
+        end
+
+        # Whether an earlier pass got as far as applying a target, which it can
+        # only have done after its pre_check passed. A handled id with no
+        # errors_log entry was applied; failures (unresolved or raised) all carry one.
+        #
+        # @return [Boolean]
+        def any_target_applied?
+          failed = errors_log.filter_map { |entry| entry["target_id"]&.to_s }.to_set
+          handled_target_ids.any? { |id| !failed.include?(id.to_s) }
         end
 
         # The interaction's validated inputs, with the types dispatch put in.
@@ -396,7 +471,16 @@ module Plutonium
             "#perform_on(record) for work over targets, or #perform for opaque work"
         end
 
+        # Checks the run's input before any work, and refuses it with #reject.
+        # Optional: the default checks nothing. Override it as
+        # +pre_check(records)+ in a run with +perform_on+ (it receives the
+        # resolved, authorized records), or +pre_check+ for opaque work.
+        # See Async::Executor#pre_check_passed?.
+        def pre_check(*) = nil
+
         private
+
+        def pre_check_entry(message) = {"target_id" => nil, "message" => message, "stage" => PRE_CHECK_STAGE}
 
         # For a standalone run class, passed as `async Billing::ReissueInvoicesRun`,
         # which has no interaction around it to take a label from. Demodulized,

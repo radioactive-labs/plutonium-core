@@ -25,18 +25,18 @@ module Plutonium
         # neither a type to infer nor a badge to infer one from (`state` is a
         # plain string column with an inclusion validation, not a Rails enum).
         #
-        # `running` and `completed_with_errors` are coloured explicitly: neither
-        # is in the badge component's semantic table, and its fallback is a
+        # `running`, `completed_with_errors` and `rejected` are coloured explicitly:
+        # none is in the badge component's semantic table, and its fallback is a
         # stable-but-meaningless colour.
         field :outcome, as: :string
         display :outcome, as: :badge,
-          colors: {running: :info, completed_with_errors: :warning}
+          colors: {running: :info, completed_with_errors: :warning, rejected: :warning}
         # Declared for the table too: the index is where an operator scans for the
         # run that did not do what it was asked, and a bare
         # "completed_with_errors" string is the one place that reads worse than
         # the badge.
         column :outcome, as: :badge,
-          colors: {running: :info, completed_with_errors: :warning}
+          colors: {running: :info, completed_with_errors: :warning, rejected: :warning}
 
         field :interaction_label, label: t("plutonium.async.run.interaction")
         field :target_label, label: t("plutonium.async.run.target_type")
