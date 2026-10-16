@@ -64,6 +64,15 @@ class AdminPortal::KanbanMetaFormattingTest < ActionDispatch::IntegrationTest
       "expected the user association to render as its display label"
   end
 
+  test "a meta badge takes the colors declared on the field's display" do
+    %w[kanban&column=active grid].each do |view|
+      get "/admin/kitchen_sinks?view=#{view}"
+
+      assert_response :success
+      assert_select "span.pu-badge.pu-badge-danger", text: "B"
+    end
+  end
+
   test "enum values in meta still humanize into badges" do
     get "/admin/kitchen_sinks?view=kanban&column=active"
 

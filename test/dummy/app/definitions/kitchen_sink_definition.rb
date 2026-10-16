@@ -146,6 +146,9 @@ class KitchenSinkDefinition < ::ResourceDefinition
 
   # Display-only renderers
   display :status, as: :badge
+  # Grid and kanban meta badges take these colors too; :b would otherwise get
+  # a hashed decorative color, never :danger.
+  display :tier, as: :badge, colors: {a: :success, b: :danger}
   display :price, as: :currency, unit: "$"                     # has_cents: 123456 cents -> $1,234.56
 
   # `column formatter:` on a boolean — the formatter receives the raw value and

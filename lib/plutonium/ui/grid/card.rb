@@ -195,7 +195,10 @@ module Plutonium
         #   - associations → display_name_of (label, not an object inspect)
         #   - everything else → humanized, with the RAW value driving the
         #     variant so status-like enums (in_progress, published…) still
-        #     resolve to a semantic color.
+        #     resolve to a semantic color. A `colors:` map declared on the
+        #     field's `column` (or else its `display`) picks the variant
+        #     first, as it does for the Badge in the table and on the show
+        #     page.
         # The variant hashes the stable formatted label for currency/associations,
         # so the decorative color no longer churns on an object's memory address.
         def render_meta_badge(name, value)
@@ -209,12 +212,18 @@ module Plutonium
             variant = badge.variant_for(label)
           else
             label = Plutonium::Translation.value_label(@record.class, name, value) || badge.humanize(value)
-            variant = badge.variant_for(value)
+            variant = badge.variant_for(value, colors: declared_colors(name))
           end
 
           span(class: tokens("pu-badge", "pu-badge-#{variant}")) do
             plain label
           end
+        end
+
+        def declared_colors(name)
+          name = name.to_sym
+          resource_definition.defined_columns.dig(name, :options, :colors) ||
+            resource_definition.defined_displays.dig(name, :options, :colors)
         end
 
         def currency_field?(name)
