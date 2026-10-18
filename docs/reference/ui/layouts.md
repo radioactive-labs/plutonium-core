@@ -109,6 +109,19 @@ The sidebar/icon-rail navigation is built with `Phlexi::Menu::Builder` in the ej
     ) %>
 ```
 
+### Links pinned above the footer
+
+`footer_menu:` takes a second `Phlexi::Menu::Builder` whose items render between the scrolling nav and the pin button, so they stay in view however long the nav gets. Items render the same way as the main menu's:
+
+```erb
+<%= render Plutonium::UI::Layout::IconRail.new(
+      menu: main_menu,
+      footer_menu: Phlexi::Menu::Builder.new do |m|
+        m.item "Settings", url: settings_path, icon: Phlex::TablerIcons::Settings
+      end
+    ) %>
+```
+
 ### Per-item link attributes
 
 Any extra options you pass to `item` are spread straight onto the rendered `<a>`, so a menu entry can opt into `target`, `rel`, `data-*`, `aria-*`, etc. Useful for items that open in their own tab or drive a Stimulus/Turbo behavior:

@@ -111,6 +111,25 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
   end
 
   # ---------------------------------------------------------------------------
+  # Footer menu
+  # ---------------------------------------------------------------------------
+
+  test "footer menu items render between the nav and the pin button" do
+    footer = StubMenu.new([StubItem.new("Settings", "/settings", StubIcon, [], {})])
+    html = render_html(Plutonium::UI::Layout::IconRail.new(menu: StubMenu.new([]), footer_menu: footer))
+
+    settings = html.index('href="/settings"')
+    assert settings, "footer item rendered"
+    assert settings > html.index('id="sidebar-navigation-content"')
+    assert settings < html.index("icon-rail#togglePin")
+  end
+
+  test "no footer menu section without footer items" do
+    html = render_html(Plutonium::UI::Layout::IconRail.new(footer_menu: StubMenu.new([])))
+    assert_not_includes html, "gap-1 px-2 py-2 border-t"
+  end
+
+  # ---------------------------------------------------------------------------
   # Pin button
   # ---------------------------------------------------------------------------
 

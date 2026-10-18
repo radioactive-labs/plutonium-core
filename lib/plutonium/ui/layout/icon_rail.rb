@@ -18,6 +18,12 @@ module Plutonium
       #   render IconRail.new(menu: @menu) do |rail|
       #     rail.with_brand { image_tag("logo.svg", class: "w-8 h-8") }
       #   end
+      #
+      # @example Links pinned above the footer, outside the scrolling nav
+      #   render IconRail.new(
+      #     menu: @menu,
+      #     footer_menu: Phlexi::Menu::Builder.new { |m| m.item "Settings", url: settings_path, icon: Phlex::TablerIcons::Settings }
+      #   )
       class IconRail < Plutonium::UI::Component::Base
         include Phlex::Slotable
 
@@ -28,9 +34,11 @@ module Plutonium
         DEFAULT_MAX_DEPTH = 2
 
         # @param menu [Phlexi::Menu::Builder, nil] Menu structure (same shape as SidebarMenu)
+        # @param footer_menu [Phlexi::Menu::Builder, nil] Links pinned above the footer, outside the scrolling nav
         # @param max_depth [Integer] Maximum rendering depth (depth 2 supports parent+children)
-        def initialize(menu: nil, max_depth: DEFAULT_MAX_DEPTH)
+        def initialize(menu: nil, footer_menu: nil, max_depth: DEFAULT_MAX_DEPTH)
           @menu = menu
+          @footer_menu = footer_menu
           @max_depth = max_depth
         end
 
@@ -46,6 +54,7 @@ module Plutonium
           ) do
             render_brand_section
             render_nav_section
+            render_footer_menu_section
             render_footer_section
           end
         end
@@ -69,6 +78,16 @@ module Plutonium
             class: "flex-1 overflow-y-auto py-3 flex flex-col items-center gap-1"
           ) do
             render_items(@menu.items, 0) if @menu&.items
+          end
+        end
+
+        # Kept ahead of the footer, which stays the rail's last section: the
+        # pinned rail's styles right-align that section to place the pin button.
+        def render_footer_menu_section
+          return if @footer_menu.nil? || @footer_menu.items.empty?
+
+          div(class: "flex flex-col items-center gap-1 px-2 py-2 border-t border-[var(--pu-border)] shrink-0") do
+            render_items(@footer_menu.items, 0)
           end
         end
 
