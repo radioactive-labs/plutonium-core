@@ -135,11 +135,12 @@ module Plutonium
         def render_leaf_item(item, depth)
           a(
             href: item.url,
-            title: item.label,
-            **item_link_attributes(item, "icon-rail-leaf #{leaf_classes(item, depth)}", base_aria: {label: item.label})
+            title: item_title(item),
+            **item_link_attributes(item, "icon-rail-leaf #{leaf_classes(item, depth)}", base_aria: {label: item_title(item)})
           ) do
             render_item_icon(item)
             span(class: "icon-rail-label hidden") { item.label }
+            render_trailing_badge(item, "icon-rail-label hidden")
           end
         end
 
@@ -184,12 +185,30 @@ module Plutonium
                   a(
                     href: child.url,
                     role: "menuitem",
+                    title: item_title(child),
                     **item_link_attributes(child, "icon-rail-flyout-item")
-                  ) { child.label }
+                  ) do
+                    plain child.label
+                    render_trailing_badge(child)
+                  end
                 end
               end
             end
           end
+        end
+
+        # The label, with the item's trailing badge in brackets, for tooltips
+        # and screen readers: "Reports (Pro)".
+        def item_title(item)
+          item.trailing_badge ? "#{item.label} (#{item.trailing_badge})" : item.label
+        end
+
+        # A short marker after the label, such as the plan that unlocks a page.
+        def render_trailing_badge(item, extra_classes = nil)
+          return unless item.trailing_badge
+
+          span(class: ["icon-rail-badge ml-auto rounded px-1.5 py-0.5 text-[10px] font-medium leading-none " \
+                       "bg-[var(--pu-surface-alt)] text-[var(--pu-text-muted)]", extra_classes].compact.join(" ")) { item.trailing_badge }
         end
 
         def render_item_icon(item)

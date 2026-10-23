@@ -9,13 +9,13 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
 
   # Minimal stand-in for a Phlexi::Menu::Item. `options` mirrors the real
   # Item#options hash (extra kwargs like :target / :rel).
-  StubItem = Struct.new(:label, :url, :icon, :items, :options) do
+  StubItem = Struct.new(:label, :url, :icon, :items, :options, :trailing_badge) do
     def active?(*)
       false
     end
   end
 
-  ActiveStubItem = Struct.new(:label, :url, :icon, :items, :options) do
+  ActiveStubItem = Struct.new(:label, :url, :icon, :items, :options, :trailing_badge) do
     def active?(*)
       true
     end
@@ -178,6 +178,30 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
 
     assert_includes html, 'title="Reports"'
     assert_includes html, 'aria-label="Reports"'
+  end
+
+  test "a leaf shows its trailing badge after the label and in its tooltip" do
+    items = [StubItem.new(label: "Reports", url: "/reports", icon: nil, items: [], trailing_badge: "Pro")]
+    html = render_html(build_component(menu: StubMenu.new(items)))
+
+    assert_match %r{<a[^>]*title="Reports \(Pro\)"}, html
+    assert_match %r{<span class="icon-rail-badge[^"]*">Pro</span>}, html
+  end
+
+  test "a flyout child shows its trailing badge" do
+    child = StubItem.new(label: "Reports", url: "/reports", icon: nil, items: [], trailing_badge: "Pro")
+    parent = StubItem.new(label: "Support", url: nil, icon: StubIcon, items: [child])
+    html = render_html(build_component(menu: StubMenu.new([parent])))
+
+    assert_match %r{icon-rail-flyout-item[^>]*>Reports<span class="icon-rail-badge[^"]*">Pro</span></a>}, html
+  end
+
+  test "items without a trailing badge render no badge" do
+    items = [StubItem.new(label: "Reports", url: "/reports", icon: nil, items: [])]
+    html = render_html(build_component(menu: StubMenu.new(items)))
+
+    refute_includes html, "icon-rail-badge"
+    assert_includes html, 'title="Reports"'
   end
 
   test "leaf item has icon-rail-leaf class" do
