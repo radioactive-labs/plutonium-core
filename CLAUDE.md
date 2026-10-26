@@ -323,6 +323,17 @@ mode, icon rail collapsed (`localStorage.theme = 'light'`,
 generated titles read as broken data). Crop dead space with `magick`. Store under
 `docs/public/images/<section>/`.
 
+Compress every PNG before committing: `docs/` ships inside the gem, so each
+screenshot is in every install.
+
+```bash
+pngquant --quality=80-95 --speed 1 --strip --skip-if-larger --ext .png --force <file>.png
+```
+
+Reuse an existing image rather than copying it into a second folder. Full-size
+brand sources live in `brand/` (excluded from the gem); `app/assets/plutonium.png`
+is the 512px compressed copy.
+
 ## Settled Decisions (do not re-litigate)
 
 - **SQLite for the dummy app** across all environments; production is multi-db

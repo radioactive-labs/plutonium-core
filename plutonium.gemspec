@@ -35,7 +35,9 @@ Gem::Specification.new do |spec|
         f.start_with?(*%w[bin/ test/ spec/ features/ .git .github appveyor Gemfile]) ||
         # Maintainer tooling; host apps read tailwind.options.js and the postcss
         # plugin from the gem, not the lockfile or yarn settings.
-        %w[.yarnrc.yml yarn.lock public/plutonium-assets/].any? { |prefix| f.start_with?(prefix) }
+        %w[.yarnrc.yml yarn.lock public/plutonium-assets/].any? { |prefix| f.start_with?(prefix) } ||
+        # Full-size brand sources; the gem ships the resized app/assets copy.
+        f.start_with?("brand/")
     end
   end
   spec.bindir = "exe"

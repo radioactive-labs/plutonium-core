@@ -13,7 +13,7 @@ tags: [announcement, dashboards, charts]
 
 Every portal Plutonium generates opens on a Dashboard page that lists your resources with a record count each. Anything past that, the numbers and charts an admin actually opens the app to see, was yours to build: a controller action, some instance variables, a view. Plutonium 0.65 ships it. A dashboard is a Ruby class of cards, mounted with one line in your routes.
 
-![A dashboard with four metric cards, an area chart of signups per day, a donut chart and a full-width welcome card](/images/blog/dashboards-overview.png)
+![A dashboard with four metric cards, an area chart of signups per day, a donut chart and a full-width welcome card](/images/guides/dashboard-overview.png)
 
 ## What's in the box
 
@@ -99,7 +99,7 @@ The page response contains no query results. Each card renders as a lazy turbo f
 
 The browser fetches each frame as it scrolls into view, and the card's block runs in that request. The page paints at once, the cheap cards fill in first, and one expensive aggregate delays itself and nothing else.
 
-![The same dashboard before its frames have loaded: every card is a grey skeleton except the Conversion metric, which is already showing 12.5%](/images/blog/dashboards-loading.png)
+![The same dashboard before its frames have loaded: every card is a grey skeleton except the Conversion metric, which is already showing 12.5%](/images/guides/dashboard-loading.png)
 
 The Conversion card in that screenshot is declared `lazy: false`, which makes it inline: its block runs in the page request and the finished card is part of the page response, with no frame, no skeleton and no second request. The price is that the page waits for it. Use it for a number cheap enough that a round trip costs more than the query, and leave everything else lazy. An inline card never refreshes, since there is no frame to reload, and in development and test an exception in its block fails the whole page rather than one frame.
 
@@ -131,7 +131,7 @@ end
 
 In development and test a card that raises, raises, and you fix the query. In production the card shows a short notice in place of its body and the rest of the dashboard is untouched.
 
-![A dashboard where the Revenue card shows a red "This card could not be loaded." notice while the metrics and the signups chart around it render normally](/images/blog/dashboards-card-error.png)
+![A dashboard where the Revenue card shows a red "This card could not be loaded." notice while the metrics and the signups chart around it render normally](/images/guides/dashboard-card-error.png)
 
 The failure is written to the Rails log with the dashboard class, the card key and the top of the backtrace, and it is reported through `Rails.error`:
 
@@ -156,7 +156,7 @@ Series colours come from the `--pu-chart-1` to `--pu-chart-8` design tokens and 
 
 Registered dashboards are grouped under a Dashboards item in the portal sidebar, with a link per dashboard. A dashboard mounted at the root is what the Home link opens, so it stays out of the group.
 
-![The portal's icon rail with the Dashboards item open, listing Overview and Content](/images/blog/dashboards-sidebar.png)
+![The portal's icon rail with the Dashboards item open, listing Overview and Content](/images/guides/dashboard-sidebar.png)
 
 If your portal has an ejected `_resource_sidebar.html.erb` from an earlier release, the [guide](/guides/dashboards#sidebar) has the block to add.
 
