@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "ostruct"
 
 class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
   def build_controller(input_def: nil, filter_def: nil, resource_class: nil)
@@ -24,13 +23,13 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     end.new
 
     if input_def
-      defn = OpenStruct.new(defined_inputs: {input_def[:name] => input_def[:value]})
+      defn = Struct.new(:defined_inputs).new(defined_inputs: {input_def[:name] => input_def[:value]})
       controller.current_definition = defn
     end
 
     if filter_def
-      filter_holder = OpenStruct.new(defined_inputs: {value: filter_def[:value]})
-      qo = OpenStruct.new(filter_definitions: {filter_def[:name] => filter_holder})
+      filter_holder = Struct.new(:defined_inputs).new(defined_inputs: {value: filter_def[:value]})
+      qo = Struct.new(:filter_definitions).new(filter_definitions: {filter_def[:name] => filter_holder})
       controller.current_query_object = qo
     end
 
@@ -134,7 +133,7 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     fake_relation.define_singleton_method(:to_a) { [] }
 
     parent = Class.new
-    reflection = OpenStruct.new(klass: associated)
+    reflection = Struct.new(:klass).new(klass: associated)
     parent.define_singleton_method(:reflect_on_association) { |name| (name == :author) ? reflection : nil }
 
     controller = build_controller(input_def: {name: :author, value: {options: {}}}, resource_class: parent)
@@ -164,7 +163,7 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     fake_relation.define_singleton_method(:to_a) { [] }
 
     parent = Class.new
-    reflection = OpenStruct.new(klass: associated)
+    reflection = Struct.new(:klass).new(klass: associated)
     parent.define_singleton_method(:reflect_on_association) { |name| (name == :author) ? reflection : nil }
 
     controller = build_controller(
@@ -193,7 +192,7 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     fake_relation.define_singleton_method(:to_a) { [] }
 
     parent = Class.new
-    reflection = OpenStruct.new(klass: associated)
+    reflection = Struct.new(:klass).new(klass: associated)
     parent.define_singleton_method(:reflect_on_association) { |name| (name == :author) ? reflection : nil }
 
     controller = build_controller(input_def: {name: :author, value: {options: {}}}, resource_class: parent)
@@ -235,7 +234,7 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     fake_relation.klass = associated
 
     parent = Class.new
-    reflection = OpenStruct.new(klass: associated)
+    reflection = Struct.new(:klass).new(klass: associated)
     parent.define_singleton_method(:reflect_on_association) { |name| (name == :author) ? reflection : nil }
 
     controller = build_controller(

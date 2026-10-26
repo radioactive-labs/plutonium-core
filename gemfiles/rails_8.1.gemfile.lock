@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ..
   specs:
-    plutonium (0.68.0)
+    plutonium (0.69.0)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
