@@ -179,6 +179,28 @@ module Plutonium
         self.show_in_config = value
       end
 
+      # pagination — how the index page counts its records. Overrides
+      # `Plutonium.configuration.pagination` key by key, and inherits to
+      # subclasses like the other definition settings.
+      #
+      #   pagination count: 10_000   # count at most 10,000 rows, then "10000+"
+      #   pagination count: false    # no COUNT query; previous/next only
+      #   pagination count: :exact   # full COUNT(*) (the global default)
+      #
+      # See Plutonium::Pagination for the accepted values.
+      inheritable_config_attr :pagination
+
+      def self.pagination(**options)
+        return pagination_config if options.empty?
+
+        self.pagination_config = (pagination_config || {}).merge(Plutonium::Pagination.validate!(options)).freeze
+      end
+
+      # The global pagination settings with this definition's overrides applied.
+      def resolved_pagination
+        Plutonium.configuration.pagination.merge(self.class.pagination_config || {})
+      end
+
       # The model this definition describes — the inverse of the
       # `"#{resource_class}Definition"` lookup controllers do
       # (Plutonium::Resource::Controller#resource_definition).

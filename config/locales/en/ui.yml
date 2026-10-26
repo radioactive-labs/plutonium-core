@@ -66,6 +66,9 @@ en:
         result_count:
           one: "%{count} result"
           other: "%{count} results"
+        result_count_capped: "%{count}+ results"
+        capped_count: "%{count}+"
+        page_range: "Displaying %{item_name} %{from}-%{to}"
         selected_count: "%{count} selected"
         clear_selection: "Clear selection"
         no_bulk_actions: "No bulk actions available"

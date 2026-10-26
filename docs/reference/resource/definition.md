@@ -855,6 +855,41 @@ All three inherit to subclasses, so a portal-specific definition keeps its paren
 - **Interactions** (`Plutonium::Interaction::Base`) support the same settings, for interactive actions rendered as standalone pages.
 - **Wizards are configured separately**, via `Plutonium.configuration.wizards.width`. It defaults to `:md` independently of `default_page_width`, so widening resource pages leaves wizard steps where they are. Set both if you want them to match.
 
+## Pagination count
+
+The index page shows its total ("Displaying Posts 1-20 of 13,742 in total") and links every page, which takes a `COUNT(*)` on each load. On a table with millions of rows that count can take seconds. `pagination` sets how much counting a resource does:
+
+```ruby
+# config/initializers/plutonium.rb
+Plutonium.configure { |config| config.pagination = {count: :exact} }   # the default
+
+class TransactionDefinition < ResourceDefinition
+  pagination count: 10_000
+end
+```
+
+| `count:` | Query | Total shown | Page links |
+|---|---|---|---|
+| `:exact` | `SELECT COUNT(*) FROM ...` | the exact total | every page |
+| an Integer | `SELECT COUNT(*) FROM (SELECT 1 FROM ... LIMIT 10001)` | exact up to the cap, then "10000+" | up to the page holding row 10,000 |
+| `false` | none: fetches one extra row to tell whether a next page exists | the page's range only, without "of N" | previous/next, plus the pages visited so far |
+
+A cap makes the count cheap when many rows match, because the subquery stops after `cap + 1` of them. It does not help a filter that matches few rows: the database still scans until it has found them all, so give that filter's column an index.
+
+Any other value raises `ArgumentError` at declaration. The setting inherits to subclasses, so a portal-specific definition keeps its parent's choice unless it sets its own.
+
+To choose per request, for example no count only while no filter is applied, override `pagination_count` in the controller. It returns the same values:
+
+```ruby
+class TransactionsController < ResourceController
+  private
+
+  def pagination_count
+    current_query_object.active_filter_descriptions.empty? ? false : 10_000
+  end
+end
+```
+
 ## File uploads
 
 ```ruby

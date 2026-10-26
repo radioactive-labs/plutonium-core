@@ -5,9 +5,14 @@ module Plutonium
     module Table
       module Components
         class FilterPills < Plutonium::UI::Component::Base
-          def initialize(query:, total_count: nil)
+          # @param total_count [Integer, nil] nil hides the count (countless
+          #   pagination, `pagination count: false`)
+          # @param count_capped [Boolean] the count stopped at its cap
+          #   (`pagination count: 10_000`), so it reads "10000+ results"
+          def initialize(query:, total_count: nil, count_capped: false)
             @query = query
             @total_count = total_count
+            @count_capped = count_capped
           end
 
           def view_template
@@ -79,7 +84,8 @@ module Plutonium
 
           def render_result_count
             div(class: "ml-auto text-xs text-[var(--pu-text-muted)]") do
-              plain t("plutonium.ui.table.result_count", count: @total_count)
+              key = @count_capped ? "plutonium.ui.table.result_count_capped" : "plutonium.ui.table.result_count"
+              plain t(key, count: @total_count)
             end
           end
         end

@@ -22,7 +22,33 @@ module Plutonium
             # eager-loading at the point of use also leaves an app's own
             # `filtered_resource_collection` override unaffected.
             collection = auto_eager_load(filtered_resource_collection, presentable_attributes_for(action))
-            @pagy, @resource_records = pagy(:offset, collection, request: pagy_request_context)
+            @pagy, @resource_records = paginate_collection(collection)
+          end
+
+          # How the index counts its records: `:exact`, an Integer cap, or
+          # `false` for no count. Read from the definition (falling back to
+          # `Plutonium.configuration.pagination`); override in a controller to
+          # decide per request.
+          def pagination_count
+            current_definition.resolved_pagination[:count]
+          end
+
+          def paginate_collection(collection)
+            case (cap = pagination_count)
+            when :exact
+              pagy(:offset, collection, request: pagy_request_context)
+            when false
+              pagy(:countless, collection, request: pagy_request_context)
+            else
+              # COUNT(*) over a LIMIT subquery stops after cap + 1 matching
+              # rows. The extra row is how we know the total went past the cap.
+              # Pagy gets the cap itself as the count, so the last page is the
+              # one holding row `cap`.
+              count = collection.limit(cap + 1).count(:all)
+              count = count.size if count.is_a?(Hash) # grouped relation
+              capped = count > cap
+              pagy(:offset, collection, count: [count, cap].min, count_capped: capped, request: pagy_request_context)
+            end
           end
 
           # What Pagy builds its page URLs from. Pagy accepts either the real

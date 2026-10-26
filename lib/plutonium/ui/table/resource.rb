@@ -71,7 +71,7 @@ module Plutonium
         end
 
         def render_filter_pills
-          TableFilterPills(query: current_query_object, total_count: pagy_instance&.count)
+          TableFilterPills(query: current_query_object, total_count: pagy_instance&.count, count_capped: pagy_instance&.options&.fetch(:count_capped, false))
         end
 
         def current_search_url
@@ -315,7 +315,7 @@ module Plutonium
 
         def render_footer
           div(class: "lg:sticky bottom-[-2px] mt-1 p-4 pb-6 w-full z-30 bg-[var(--pu-body)]") {
-            TableInfo(pagy_instance, item_name: resource_name(resource_class, pagy_instance.count))
+            TableInfo(pagy_instance, item_name: resource_name(resource_class, pagy_instance.count || 2))
             TablePagination(pagy_instance)
           }
         end
