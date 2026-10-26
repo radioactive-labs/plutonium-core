@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.70.0] - 2026-10-26
+
+### Bug Fixes
+
+- Color meta badges from the field's declared colors
+
+### Features
+
+- Pin links above the icon rail's footer with footer_menu
+- Show a menu item's trailing badge in the icon rail
+- Cap or skip the index COUNT with pagination count: ([#188](https://github.com/radioactive-labs/plutonium-core/issues/188))
+
+### Miscellaneous Tasks
+
+- Move to Ruby 4.0.9 and test on 3.4 and 4.0 ([#187](https://github.com/radioactive-labs/plutonium-core/issues/187))
+- Compress docs images and shrink the logo ([#189](https://github.com/radioactive-labs/plutonium-core/issues/189))
+
 ## [0.69.0] - 2026-10-15
 
 ### Bug Fixes
