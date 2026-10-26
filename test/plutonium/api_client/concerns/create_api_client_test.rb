@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "ostruct"
 
 module Plutonium
   module ApiClient
@@ -44,7 +43,7 @@ module Plutonium
           end
 
           def self.model_name
-            OpenStruct.new(singular: "mock_api_client")
+            Struct.new(:singular).new(singular: "mock_api_client")
           end
         end
 
@@ -56,7 +55,7 @@ module Plutonium
           end
 
           def self.model_name
-            OpenStruct.new(singular: "mock_entity")
+            Struct.new(:singular).new(singular: "mock_entity")
           end
         end
 
@@ -132,7 +131,7 @@ module Plutonium
           end
 
           def model_name
-            OpenStruct.new(singular: "mock_api_client")
+            Struct.new(:singular).new(singular: "mock_api_client")
           end
         end
 

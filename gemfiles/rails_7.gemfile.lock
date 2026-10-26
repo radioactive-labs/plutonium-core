@@ -9,7 +9,7 @@ GIT
 PATH
   remote: ..
   specs:
-    plutonium (0.68.0)
+    plutonium (0.69.0)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
@@ -608,10 +608,10 @@ CHECKSUMS
   phlex-tabler_icons (0.3.0) sha256=67d80cc09c619646cff171a620fa805cb49543625c3586a947cd752d44d2858e
   phlexi-display (0.2.0) sha256=73e22d01e7204a3b94dcb21432477982bfa5162926c11bacd7d48930114236de
   phlexi-field (0.2.0) sha256=ecb509cc2c0e0559f52651cac8d5dd2fca4bda3878cb7343ea7b298c760e7bca
-  phlexi-form (0.14.4)
+  phlexi-form (0.14.4) sha256=f5409274dd8441789612d6bf06c9f905a1bc6e2b802620de794905cf4b9ad59b
   phlexi-menu (0.4.1) sha256=f6eeb1eb9597caadeee33a53f1520b3613a6ac616cf1e395e9d734a412895fb2
   phlexi-table (0.2.0) sha256=73bee135adbe73fcdb6fdd2672444373556dd9e6bba61e7b5b20ca8b7a1f822c
-  plutonium (0.68.0)
+  plutonium (0.69.0)
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85

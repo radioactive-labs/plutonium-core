@@ -21,6 +21,7 @@ jobs:
         ruby:
           - "3.3"
           - "3.4"
+          - "4.0"
 
     steps:
       - uses: actions/checkout@v4
@@ -38,10 +39,13 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    name: Tests (Rails ${{ matrix.rails }})
+    name: Tests (Ruby ${{ matrix.ruby }}, Rails ${{ matrix.rails }})
     strategy:
       fail-fast: false
       matrix:
+        ruby:
+          - "3.4"
+          - "4.0"
         rails:
           - "rails-7"
           - "rails-8.0"
@@ -51,7 +55,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Install appraisal gemfiles
         run: bundle exec appraisal install
@@ -72,7 +76,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: .ruby-version
           bundler-cache: true
       - name: Install appraisal gemfiles
         run: bundle exec appraisal install
@@ -112,7 +116,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.4"
+          ruby-version: .ruby-version
           bundler-cache: true
       - name: Verify Plutonium::Positioning + t.position on PostgreSQL
         env:

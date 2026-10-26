@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "ostruct"
 require "pagy"
 require "pagy/toolbox/helpers/support/series"
 require "plutonium/ui/table/components/pagy_pagination"
@@ -89,7 +88,7 @@ class Plutonium::UI::Table::Components::PagyPaginationTest < Minitest::Test
 
   def build_pagy(count:, page:, limit:)
     pagy = Pagy::Offset.new(count: count, page: page, limit: limit)
-    mock_request = OpenStruct.new(params: {"page" => page.to_s}, path: "/posts")
+    mock_request = Struct.new(:params, :path).new(params: {"page" => page.to_s}, path: "/posts")
     pagy.instance_variable_set(:@request, mock_request)
     pagy
   end

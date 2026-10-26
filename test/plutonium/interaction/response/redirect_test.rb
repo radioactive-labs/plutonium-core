@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "ostruct"
 
 module Plutonium
   module Interaction
@@ -15,7 +14,7 @@ module Plutonium
           end
 
           def format
-            OpenStruct.new(symbol: @format_symbol)
+            Struct.new(:symbol).new(symbol: @format_symbol)
           end
         end
 
@@ -148,7 +147,7 @@ module Plutonium
         test "a turbo_stream request redirects to the page, not a .turbo_stream URL" do
           controller = MockController.new
           controller.request.format_symbol = :turbo_stream
-          def controller.url_for(*args) = args.last.is_a?(Hash) && args.last[:format] ? "/runs/1.#{args.last[:format]}" : "/runs/1"
+          def controller.url_for(*args) = (args.last.is_a?(Hash) && args.last[:format]) ? "/runs/1.#{args.last[:format]}" : "/runs/1"
           response = Redirect.new(:run)
 
           response.process(controller)

@@ -2,7 +2,6 @@
 
 require "test_helper"
 require "csv"
-require "ostruct"
 
 class Plutonium::Resource::Controllers::ExportCsvTest < Minitest::Test
   # Minimal in-memory relation that responds to find_each like an
@@ -40,7 +39,7 @@ class Plutonium::Resource::Controllers::ExportCsvTest < Minitest::Test
     controller.authorized_scope = FakeRelation.new(all_rows || rows)
     controller.params = ActiveSupport::HashWithIndifferentAccess.new(params)
     controller.current_policy = FakePolicy.new(exportable)
-    controller.current_definition = OpenStruct.new(defined_exports: defined_exports)
+    controller.current_definition = Struct.new(:defined_exports).new(defined_exports: defined_exports)
     controller.resource_class = build_resource_class
     # The real controller reaches view helpers (resource_name_plural for the
     # filename, display_name_of for associations) via the `helpers` proxy.
