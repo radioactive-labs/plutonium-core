@@ -1358,6 +1358,19 @@ default_sort :created_at, :desc
 default_sort { |scope| scope.order(featured: :desc, created_at: :desc) }
 ```
 
+## Pagination count
+
+Each index page load runs a `COUNT(*)` for the total. On a table with millions of rows that count can take longer than the page query itself. Cap it or turn it off per resource:
+
+```ruby
+class TransactionDefinition < ResourceDefinition
+  pagination count: 10_000   # count at most 10,000 rows; past that the total reads "10000+"
+  pagination count: false    # no COUNT query; previous/next navigation only
+end
+```
+
+The global default is `config.pagination = {count: :exact}`. A cap stops counting early only when many rows match: a filter that matches few rows still scans for them, so index the filtered column. Pages past the cap are out of range. To decide per request, override the private `pagination_count` method in the controller.
+
 ## URL Parameters
 
 ```

@@ -34,19 +34,39 @@ module Plutonium
           private
 
           def results_info
-            key = if @pagy.count.zero?
-              "pagy.info_tag.no_items"
-            elsif @pagy.in == @pagy.count
-              "pagy.info_tag.single_page"
-            else
-              "pagy.info_tag.multiple_pages"
-            end
-
             div do
-              render_template(pagy_template(key, @pagy.count)) do |placeholder|
-                b { @pagy.public_send(placeholder).to_s }
+              render_template(results_template) do |placeholder|
+                b { (placeholder == :count) ? count_label : @pagy.public_send(placeholder).to_s }
               end
             end
+          end
+
+          def results_template
+            count = known_count
+            if count.nil?
+              # Countless, past page 1: the total is unknown, so no "of N".
+              t("plutonium.ui.table.page_range", item_name: item_name(2), from: "%{from}", to: "%{to}")
+            elsif count.zero?
+              pagy_template("pagy.info_tag.no_items", count)
+            elsif count == @pagy.in
+              pagy_template("pagy.info_tag.single_page", count)
+            else
+              pagy_template("pagy.info_tag.multiple_pages", count)
+            end
+          end
+
+          # The total, when it is known. A countless pager (`pagination count:
+          # false`) has none, except on a first page with no next page, where the
+          # rows on it are the whole set.
+          def known_count
+            return @pagy.count if @pagy.count
+            @pagy.in if @pagy.page == 1 && !@pagy.next
+          end
+
+          # "10000+" when the count hit its cap (`pagination count: 10_000`).
+          def count_label
+            count = known_count.to_s
+            @pagy.options[:count_capped] ? t("plutonium.ui.table.capped_count", count:) : count
           end
 
           def per_page_selector

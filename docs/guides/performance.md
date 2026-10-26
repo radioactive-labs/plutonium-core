@@ -91,6 +91,20 @@ It works without per-model configuration. Before adding it:
 
 [`ar_lazy_preload`](https://github.com/DmitryTsepelev/ar_lazy_preload) takes the same idea from the other end, preloading lazily on first access, with `ArLazyPreload.config.auto_preload = true` for automatic behaviour everywhere. Its docs warn that enabling it on an existing app can surface edge cases.
 
+## Counting large tables
+
+Each index page load counts the matching rows to show the total and link the last page. That `COUNT(*)` reads every matching row, and on a table with millions of rows it can take longer than the page of records it sits next to. An index on the sort column does not help it.
+
+Cap the count, or drop it, on the resources that need it:
+
+```ruby
+class TransactionDefinition < ResourceDefinition
+  pagination count: 10_000   # "10000+" past the cap
+end
+```
+
+A capped count is cheap when the filter matches many rows. A filter that matches few rows still scans for them, so index the columns your scopes and filters use. See [Definition › Pagination count](/reference/resource/definition#pagination-count).
+
 ## Work that does not belong in a request at all
 
 Eager loading fixes a page whose queries are wasteful. It does nothing for one that is simply doing too much work: archiving thousands of records, building a report, waiting on a third party.

@@ -79,6 +79,22 @@ module Plutonium
     #   off globally here, or per controller via `auto_eager_load_collections?`.
     attr_accessor :auto_eager_load_collections
 
+    # @return [Hash] index-page pagination defaults. Definitions override per
+    #   resource with `pagination count: ...`.
+    #
+    #   `count:` is what the index pays to know its total:
+    #   - `:exact` (default): a full COUNT(*) on every page load
+    #   - an Integer: count at most that many rows; past it the total reads
+    #     "N+" and pages beyond the cap are out of range
+    #   - `false`: no COUNT query; previous/next navigation only
+    #
+    #   Keys left out keep their defaults.
+    attr_reader :pagination
+
+    def pagination=(value)
+      @pagination = Plutonium::Pagination::DEFAULTS.merge(Plutonium::Pagination.validate!(value)).freeze
+    end
+
     # @return [String, nil] the default country (ISO2 code, e.g. "gh") for phone
     #   (`as: :phone`) inputs that don't set their own `initial_country:`. `nil`
     #   (default) leaves it to the intl-tel-input library (no country preselected).
@@ -156,6 +172,7 @@ module Plutonium
       @navii_host_url = "https://api.navii.dev"
       @auto_eager_load_collections = true
       @default_page_width = :md
+      @pagination = {count: :exact}.freeze
       @nested_association_routes = :detected
     end
 
