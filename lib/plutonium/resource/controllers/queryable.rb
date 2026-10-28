@@ -14,7 +14,11 @@ module Plutonium
             # (sort headers, scope pills, filter links) belongs to the page being
             # rendered, which is not the request path when a stream-producing
             # POST re-renders a collection on the index's behalf.
-            Plutonium::Resource::QueryObject.new(resource_class, raw_resource_query_params, current_page_path) do |query_object|
+            #
+            # helpers is this request's view context: filters use it to scope
+            # lookups (e.g. the active-filter chip's labels) to the current
+            # user and entity.
+            Plutonium::Resource::QueryObject.new(resource_class, raw_resource_query_params, current_page_path, view_context: helpers) do |query_object|
               if current_definition.search_definition
                 query_object.define_search proc { |scope, search:|
                   current_definition.search_definition.call(scope, search)

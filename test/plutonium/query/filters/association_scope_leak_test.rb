@@ -174,4 +174,55 @@ class AssociationScopeLeakTest < ActiveSupport::TestCase
     # rendered HTML: `span { plain "#{filter[:label]}: #{filter[:value_label]}" }`.
     refute_equal "Internal Confidential Category", cat_desc[:value_label]
   end
+
+  # ===========================================================================
+  # Authorization: the chip honours the association's policy scope
+  # ===========================================================================
+  # The dropdown runs its options through `authorized_resource_scope` (the
+  # policy's relation_scope, which narrows to the current entity). With a view
+  # context, `humanize_value` does the same, so a crafted id the policy hides
+  # resolves to nothing.
+
+  class FakeViewContext
+    attr_reader :calls
+
+    def initialize(visible_ids)
+      @visible_ids = visible_ids
+      @calls = []
+    end
+
+    def authorized_resource_scope(klass, relation:)
+      @calls << klass
+      relation.where(id: @visible_ids)
+    end
+  end
+
+  def test_humanize_value_drops_ids_the_policy_scope_hides
+    filter = category_filter(scope: nil)
+    filter.view_context = FakeViewContext.new([@included_cat.id])
+
+    assert_equal "", filter.humanize_value(@excluded_cat.id.to_s)
+    assert_equal "Public Category", filter.humanize_value(@included_cat.id.to_s)
+    assert_equal [Catalog::Category, Catalog::Category], filter.view_context.calls
+  end
+
+  def test_humanize_value_applies_the_static_scope_before_authorization
+    view_context = FakeViewContext.new([@included_cat.id, @excluded_cat.id])
+    filter = category_filter
+    filter.view_context = view_context
+
+    assert_equal "", filter.humanize_value(@excluded_cat.id.to_s)
+  end
+
+  def test_query_object_hands_its_view_context_to_filters
+    view_context = FakeViewContext.new([@included_cat.id])
+    query_object = Plutonium::Resource::QueryObject.new(
+      Object, {category: {value: @excluded_cat.id.to_s}}, "/catalog/products", view_context: view_context
+    ) do |qo|
+      qo.define_filter(:category, category_filter(scope: nil))
+    end
+
+    assert_same view_context, query_object.filter_definitions[:category].view_context
+    assert_nil query_object.active_filter_descriptions.find { |d| d[:name] == :category }
+  end
 end

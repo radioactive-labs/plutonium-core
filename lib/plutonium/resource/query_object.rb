@@ -42,10 +42,15 @@ module Plutonium
         Plutonium::Translation.label_for(:scope, resource_class, name) || name.to_s.humanize
       end
 
-      def initialize(resource_class, params, request_path, &)
+      # The request's view context, handed to every Filter so it can scope
+      # its lookups to the current user and entity. nil outside a request.
+      attr_reader :view_context
+
+      def initialize(resource_class, params, request_path, view_context: nil, &)
         @resource_class = resource_class
         @params = params
         @request_path = request_path
+        @view_context = view_context
 
         define_standard_queries
         yield self if block_given?
@@ -64,7 +69,9 @@ module Plutonium
             "filter name :#{name} is reserved — the query string uses q[#{name}] as a " \
             "built-in control (one of: #{RESERVED_FILTER_NAMES.join(", ")}). Rename the filter."
         end
-        filter_definitions[name] = build_query(body, &)
+        filter = build_query(body, &)
+        filter.view_context ||= view_context if filter.is_a?(Plutonium::Query::Filter)
+        filter_definitions[name] = filter
       end
 
       # Defines a scope with the given name and body.

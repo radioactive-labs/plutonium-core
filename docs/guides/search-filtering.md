@@ -143,6 +143,8 @@ end
 filter :price, with: PriceRangeFilter
 ```
 
+A filter can reach the request through `view_context` (`current_user`, `current_scoped_entity`, `authorized_resource_scope`), for example to keep a lookup inside the current tenant. See [Request context in a filter](/reference/resource/query#request-context-in-a-filter).
+
 Clicking **Filter** opens a slideover with one input per declared filter:
 
 ![Filter slideover](/images/guides/search-filtering-panel.png)

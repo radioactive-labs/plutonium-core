@@ -1321,6 +1321,14 @@ end
 filter :price, with: PriceRangeFilter
 ```
 
+**Request context:** a filter's `view_context` (nil outside a request) exposes `current_user`, `current_scoped_entity` and `authorized_resource_scope` to `apply`, `humanize_value` (the active-filter chip text) and `customize_inputs`. Scope any id-to-label lookup with it, or the chip can name another tenant's record from a crafted URL. The built-in `:association` filter already resolves chip labels through the associated model's policy `relation_scope`.
+
+```ruby
+def humanize_value(value)
+  Catalog::Product.where(organization: view_context.current_scoped_entity).find_by(id: value)&.name.to_s
+end
+```
+
 ## Scopes
 
 Scopes appear as quick filter buttons.
