@@ -20,6 +20,14 @@ module Plutonium
 
       attr_reader :resource_class
 
+      # The view context of the request this filter is serving, or nil outside
+      # one. It carries the same helpers the filter form and `condition:` procs
+      # see, so `current_user`, `current_scoped_entity` and
+      # `authorized_resource_scope` are available from `apply`,
+      # `humanize_value` and `customize_inputs`. QueryObject sets it when the
+      # filter is defined.
+      attr_accessor :view_context
+
       def initialize(key:, resource_class: nil, label: nil)
         super()
         @key = key

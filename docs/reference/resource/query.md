@@ -150,6 +150,8 @@ filter :author,   with: :association, class_name: User
 filter :tags,     with: :association, class_name: Tag, multiple: true
 ```
 
+The options, and the label in the active-filter chip, come from the associated model's policy `relation_scope`, so in an entity-scoped portal they only include the current tenant's records. A crafted `?q[category][value]=<id>` for a record the user can't see shows no chip.
+
 ### Tags
 
 For a [no_fly_list](https://github.com/radioactive-labs/no_fly_list) `has_tags` context. The options are the tags used by records the user can see (the policy scope), so a tenant never sees another tenant's tags.
@@ -191,6 +193,30 @@ end
 
 filter :price, with: PriceRangeFilter
 ```
+
+### Request context in a filter
+
+A filter has `view_context`, the same object `condition:` procs see, so `current_user`, `current_scoped_entity` and `authorized_resource_scope` are available from `apply`, `humanize_value` (which writes the active-filter chip) and `customize_inputs`. Use it to keep a lookup inside the current tenant:
+
+```ruby
+class OwnProductFilter < Plutonium::Query::Filter
+  def apply(scope, value:)
+    scope.where(product_id: products.where(id: value))
+  end
+
+  def humanize_value(value)
+    products.find_by(id: value)&.name.to_s
+  end
+
+  private
+
+  def products
+    Catalog::Product.where(organization: view_context.current_scoped_entity)
+  end
+end
+```
+
+`view_context` is `nil` when a filter is used outside a request.
 
 ## Scopes
 

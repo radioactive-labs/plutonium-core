@@ -34,7 +34,12 @@ module Plutonium
           # configured `scope:` and let a crafted `?q[<key>][value]=<out-of-scope
           # id>` render the hidden record's `to_label` into the active-filter
           # pill even though the matching filter was dropped at submission.
-          records = scoped_relation.where(id: ids)
+          #
+          # The same goes for authorization: the dropdown runs its options
+          # through the association's policy scope (which narrows to the
+          # current entity), so the chip does too. Without it, an id from
+          # another tenant would render that tenant's record label.
+          records = authorized_relation.where(id: ids)
           records.map { |r| r.respond_to?(:to_label) ? r.to_label : r.to_s }.join(", ")
         rescue
           Array(value).reject(&:blank?).join(", ")
@@ -93,6 +98,16 @@ module Plutonium
 
         def infer_class_from_key
           key.to_s.classify.constantize
+        end
+
+        # `scoped_relation` narrowed by the association's policy scope, exactly
+        # like ResourceSelect#authorized_relation. Outside a request (no view
+        # context) there is no user or entity to authorize against.
+        def authorized_relation
+          relation = scoped_relation
+          return relation unless view_context
+
+          view_context.authorized_resource_scope(association_class, relation: relation)
         end
 
         # The relation used to resolve `humanize_value` labels, narrowed by the
