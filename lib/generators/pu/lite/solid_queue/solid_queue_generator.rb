@@ -6,10 +6,10 @@ module Pu
   module Lite
     class SolidQueueGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
-      include PlutoniumGenerators::Concerns::ConfiguresSqlite
+      include PlutoniumGenerators::Concerns::ConfiguresDatabase
       include PlutoniumGenerators::Concerns::MountsEngines
 
-      desc "Set up Solid Queue for background jobs with SQLite"
+      desc "Set up Solid Queue for background jobs (its own SQLite file, or a database on the primary's server)"
 
       class_option :database, type: :string, default: "queue",
         desc: "Database name for Solid Queue"
@@ -22,7 +22,7 @@ module Pu
         @db_name = options[:database]
 
         bundle "solid_queue"
-        add_sqlite_database(@db_name)
+        add_secondary_database(@db_name)
         run_solid_queue_install
         configure_application
         prepare_database(@db_name)

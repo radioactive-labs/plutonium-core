@@ -5,6 +5,23 @@ covers the two tuning/maintenance generators; the solid_queue / solid_cache /
 solid_cable / solid_errors / litestream / rails_pulse generators are run the
 same way (`rails g pu:lite:<name>`).
 
+## With a PostgreSQL primary
+
+The `pluton8.rb` / `lite.rb` templates follow the app's primary database. With
+`rails new -d postgresql` there is no SQLite anywhere: solid_queue, solid_cache,
+solid_cable, solid_errors and rails_pulse each get their own database on the same
+PostgreSQL server, named after the primary with a suffix
+(`myapp_development_queue`, `myapp_production_cache`, ...), the way stock Rails lays
+out its production databases. Each entry in `config/database.yml` copies the
+primary's connection settings, so nothing extra to configure.
+
+The steps that only make sense for SQLite are skipped: the `sqlite3` gem
+(`pu:lite:setup`), `pu:lite:tune`, `pu:lite:litestream` and `pu:lite:maintenance`.
+
+The individual generators (`pu:lite:solid_queue` and the rest) make the same
+choice when run on their own, based on the `adapter` in the `default` block of
+`config/database.yml`.
+
 ## `pu:lite:tune`
 
 Adds tuned performance pragmas to the `default: &default` block of

@@ -6,6 +6,7 @@ module Pu
   module Lite
     class TuneGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
+      include PlutoniumGenerators::Concerns::RequiresSqlite
 
       desc "Tune config/database.yml with performance pragmas for SQLite"
 
@@ -13,6 +14,8 @@ module Pu
       DATABASE_YML = "config/database.yml"
 
       def start
+        return unless sqlite_primary?
+
         path = File.expand_path(DATABASE_YML, destination_root)
         unless File.exist?(path)
           log :skip, "#{DATABASE_YML} not found"

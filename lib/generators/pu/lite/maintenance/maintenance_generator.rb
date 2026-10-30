@@ -6,6 +6,7 @@ module Pu
   module Lite
     class MaintenanceGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
+      include PlutoniumGenerators::Concerns::RequiresSqlite
       include PlutoniumGenerators::Concerns::ConfiguresRecurring
 
       source_root File.expand_path("templates", __dir__)
@@ -18,6 +19,8 @@ module Pu
         desc: "Schedule for clearing finished SolidQueue jobs"
 
       def start
+        return unless sqlite_primary?
+
         template "app/jobs/sqlite_maintenance_job.rb"
 
         if gem_in_bundle?("solid_queue")

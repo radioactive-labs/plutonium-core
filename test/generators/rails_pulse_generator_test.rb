@@ -14,8 +14,8 @@ class RailsPulseGeneratorTest < ActiveSupport::TestCase
     assert Pu::Lite::RailsPulseGenerator.include?(PlutoniumGenerators::Generator)
   end
 
-  test "rails_pulse generator includes ConfiguresSqlite and MountsEngines concerns" do
-    assert Pu::Lite::RailsPulseGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresSqlite)
+  test "rails_pulse generator includes ConfiguresDatabase and MountsEngines concerns" do
+    assert Pu::Lite::RailsPulseGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresDatabase)
     assert Pu::Lite::RailsPulseGenerator.include?(PlutoniumGenerators::Concerns::MountsEngines)
   end
 

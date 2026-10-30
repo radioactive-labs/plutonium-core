@@ -6,11 +6,11 @@ module Pu
   module Lite
     class SolidCableGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
-      include PlutoniumGenerators::Concerns::ConfiguresSqlite
+      include PlutoniumGenerators::Concerns::ConfiguresDatabase
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Set up Solid Cable for Action Cable with SQLite"
+      desc "Set up Solid Cable for Action Cable (its own SQLite file, or a database on the primary's server)"
 
       class_option :database, type: :string, default: "cable",
         desc: "Database name for Solid Cable"
@@ -19,7 +19,7 @@ module Pu
         @db_name = options[:database]
 
         bundle "solid_cable"
-        add_sqlite_database(@db_name)
+        add_secondary_database(@db_name)
         run_solid_cable_install
         configure_cable_yml
         prepare_database(@db_name)
