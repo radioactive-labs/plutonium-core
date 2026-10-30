@@ -27,7 +27,10 @@ class LitePostgresAppTest < ActiveSupport::TestCase
   test "lite databases of a new PostgreSQL app are PostgreSQL databases" do
     Dir.mktmpdir do |tmp|
       app = File.join(tmp, "pg_app")
-      output, status = Open3.capture2e("bundle", "exec", "rails", "new", app, *RAILS_NEW_FLAGS,
+      # The appraisal lockfiles pin an older Bundler than CI runs; without this the
+      # `bundle` shim that `rails new` spawns tries to activate the pinned one.
+      output, status = Open3.capture2e({"BUNDLER_VERSION" => Bundler::VERSION},
+        "bundle", "exec", "rails", "new", app, *RAILS_NEW_FLAGS,
         chdir: File.expand_path("../..", __dir__))
       assert status.success?, "rails new failed:\n#{output}"
       assert_match(/adapter: postgresql/, read_database_yml(app))
