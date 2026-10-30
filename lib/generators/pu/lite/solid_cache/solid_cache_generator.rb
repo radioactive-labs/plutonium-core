@@ -6,11 +6,11 @@ module Pu
   module Lite
     class SolidCacheGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
-      include PlutoniumGenerators::Concerns::ConfiguresSqlite
+      include PlutoniumGenerators::Concerns::ConfiguresDatabase
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Set up Solid Cache with SQLite"
+      desc "Set up Solid Cache (its own SQLite file, or a database on the primary's server)"
 
       class_option :database, type: :string, default: "cache",
         desc: "Database name for Solid Cache"
@@ -21,7 +21,7 @@ module Pu
         @db_name = options[:database]
 
         bundle "solid_cache"
-        add_sqlite_database(@db_name)
+        add_secondary_database(@db_name)
         run_solid_cache_install
         configure_cache_yml
         configure_application
