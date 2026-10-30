@@ -5,6 +5,14 @@ covers the two tuning/maintenance generators; the solid_queue / solid_cache /
 solid_cable / solid_errors / litestream / rails_pulse generators are run the
 same way (`rails g pu:lite:<name>`).
 
+## Skipping a step in the template
+
+`lite.rb` and `experimental.rb` skip a step when its `SKIP_` variable is `1`, `true`
+or `yes`: `SKIP_SOLID_QUEUE`, `SKIP_SOLID_CACHE`, `SKIP_SOLID_CABLE`,
+`SKIP_SOLID_ERRORS`, `SKIP_LITESTREAM`, `SKIP_RAILS_PULSE`, `SKIP_SQLITE_MAINTENANCE`,
+`SKIP_WIZARDS` and `SKIP_ASYNC_INTERACTIONS`. Any other value, including `false`,
+leaves the step on.
+
 ## With a PostgreSQL primary
 
 The `pluton8.rb` / `lite.rb` templates follow the app's primary database. With

@@ -150,6 +150,17 @@ Hot reload covers `lib/plutonium/**` and `packages/**` in **development** only
 (the Listen-based `Plutonium::Reloader`). The **test**-env server does not reload,
 so `lib/` edits there need a restart.
 
+### Testing the app template against your checkout
+
+`LOCAL=1` makes `docs/public/templates/pluton8.rb` build from the checkout it was
+loaded from (its templates and its gem) instead of the published ones. `-m` must
+be the full path to the file; `LOCAL=1` with the published URL aborts.
+
+```bash
+LOCAL=1 rails new myapp -d postgresql -a propshaft -j esbuild -c tailwind \
+  -m /path/to/plutonium-core/docs/public/templates/pluton8.rb
+```
+
 ### Building assets
 
 There is no `Procfile.dev`. Frontend work runs through yarn:
