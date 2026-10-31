@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "open3"
+require "fileutils"
 require "tmpdir"
 
 # Regression: `rails new -d postgresql` followed by the lite generators failed in
@@ -27,11 +28,16 @@ class LitePostgresAppTest < ActiveSupport::TestCase
   test "lite databases of a new PostgreSQL app are PostgreSQL databases" do
     Dir.mktmpdir do |tmp|
       app = File.join(tmp, "pg_app")
-      # The appraisal lockfiles pin an older Bundler than CI runs, and that copy
-      # cannot be loaded by the `bundle` shim `rails new` spawns. Use the newest.
-      bundler = Gem::Specification.find_all_by_name("bundler").map(&:version).max.to_s
-      output, status = Open3.capture2e({"BUNDLER_VERSION" => bundler},
-        "bundle", "exec", "rails", "new", app, *RAILS_NEW_FLAGS,
+      # Nothing here needs Bundler (--skip-bundle), but `rails new` still spawns a
+      # `bundle` at the end, and the shim fails when the appraisal lockfile pins a
+      # Bundler older than the one installed. A no-op `bundle` ahead on PATH avoids it.
+      bin = File.join(tmp, "bin")
+      FileUtils.mkdir_p(bin)
+      File.write(File.join(bin, "bundle"), "#!/bin/sh\nexit 0\n")
+      FileUtils.chmod(0o755, File.join(bin, "bundle"))
+
+      output, status = Open3.capture2e({"PATH" => "#{bin}:#{ENV["PATH"]}"},
+        RbConfig.ruby, Gem.bin_path("railties", "rails"), "new", app, *RAILS_NEW_FLAGS,
         chdir: File.expand_path("../..", __dir__))
       assert status.success?, "rails new failed:\n#{output}"
       assert_match(/adapter: postgresql/, read_database_yml(app))
