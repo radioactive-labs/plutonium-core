@@ -6,10 +6,10 @@ module Pu
   module Lite
     class SolidErrorsGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
-      include PlutoniumGenerators::Concerns::ConfiguresSqlite
+      include PlutoniumGenerators::Concerns::ConfiguresDatabase
       include PlutoniumGenerators::Concerns::MountsEngines
 
-      desc "Set up Solid Errors for error tracking with SQLite"
+      desc "Set up Solid Errors for error tracking (its own SQLite file, or a database on the primary's server)"
 
       class_option :database, type: :string, default: "errors",
         desc: "Database name for Solid Errors"
@@ -20,7 +20,7 @@ module Pu
         @db_name = options[:database]
 
         bundle "solid_errors"
-        add_sqlite_database(@db_name)
+        add_secondary_database(@db_name)
         run_solid_errors_install
         configure_application
         prepare_database(@db_name)

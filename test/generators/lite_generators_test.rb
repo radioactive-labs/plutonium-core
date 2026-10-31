@@ -114,21 +114,21 @@ class LiteGeneratorsTest < ActiveSupport::TestCase
   end
 
   # Test generators include appropriate concerns
-  test "solid_queue generator includes ConfiguresSqlite and MountsEngines concerns" do
-    assert Pu::Lite::SolidQueueGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresSqlite)
+  test "solid_queue generator includes ConfiguresDatabase and MountsEngines concerns" do
+    assert Pu::Lite::SolidQueueGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresDatabase)
     assert Pu::Lite::SolidQueueGenerator.include?(PlutoniumGenerators::Concerns::MountsEngines)
   end
 
-  test "solid_cache generator includes ConfiguresSqlite concern" do
-    assert Pu::Lite::SolidCacheGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresSqlite)
+  test "solid_cache generator includes ConfiguresDatabase concern" do
+    assert Pu::Lite::SolidCacheGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresDatabase)
   end
 
-  test "solid_cable generator includes ConfiguresSqlite concern" do
-    assert Pu::Lite::SolidCableGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresSqlite)
+  test "solid_cable generator includes ConfiguresDatabase concern" do
+    assert Pu::Lite::SolidCableGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresDatabase)
   end
 
-  test "solid_errors generator includes ConfiguresSqlite and MountsEngines concerns" do
-    assert Pu::Lite::SolidErrorsGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresSqlite)
+  test "solid_errors generator includes ConfiguresDatabase and MountsEngines concerns" do
+    assert Pu::Lite::SolidErrorsGenerator.include?(PlutoniumGenerators::Concerns::ConfiguresDatabase)
     assert Pu::Lite::SolidErrorsGenerator.include?(PlutoniumGenerators::Concerns::MountsEngines)
   end
 

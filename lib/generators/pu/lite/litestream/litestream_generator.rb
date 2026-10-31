@@ -6,6 +6,7 @@ module Pu
   module Lite
     class LitestreamGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
+      include PlutoniumGenerators::Concerns::RequiresSqlite
       include PlutoniumGenerators::Concerns::MountsEngines
 
       desc "Set up Litestream for SQLite replication/backup"
@@ -16,6 +17,8 @@ module Pu
         desc: "Configure Litestream to use Rails credentials"
 
       def start
+        return unless sqlite_primary?
+
         bundle "litestream"
         run_litestream_install
         create_litestream_script

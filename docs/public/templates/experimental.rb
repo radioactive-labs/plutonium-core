@@ -1,3 +1,6 @@
+# SKIP_<STEP>=1 (or true) skips a step; any other value, including "false", does not.
+skip = ->(step) { %w[1 true yes].include?(ENV["SKIP_#{step}"].to_s.downcase) }
+
 # Plutonium's experimental subsystems: wizards and async interactions.
 #
 # Both are off by default — their flags gate their MIGRATIONS as well as their
@@ -10,7 +13,7 @@
 after_bundle do
   # SweepJob is the only thing that cleans up the partial domain records an
   # abandoned `on_submit` wizard leaves behind. Unscheduled, those accumulate.
-  unless ENV["SKIP_WIZARDS"]
+  unless skip.call("WIZARDS")
     generate "pu:wizards:install"
     git add: "."
     git commit: %( -m 'chore: enable wizards') if `git status --porcelain`.present?
@@ -20,7 +23,7 @@ after_bundle do
   # for the run resource in an app about to grow them. This turns the subsystem
   # on; `rails g pu:async_interactions:install --dest=<portal>` connects the
   # progress page and running banner once there is a portal worth naming.
-  unless ENV["SKIP_ASYNC_INTERACTIONS"]
+  unless skip.call("ASYNC_INTERACTIONS")
     generate "pu:async_interactions:install --skip-portal"
     git add: "."
     git commit: %( -m 'chore: enable async interactions') if `git status --porcelain`.present?

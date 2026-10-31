@@ -6,13 +6,13 @@ module Pu
   module Lite
     class RailsPulseGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
-      include PlutoniumGenerators::Concerns::ConfiguresSqlite
+      include PlutoniumGenerators::Concerns::ConfiguresDatabase
       include PlutoniumGenerators::Concerns::ConfiguresRecurring
       include PlutoniumGenerators::Concerns::MountsEngines
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Set up Rails Pulse for performance monitoring with SQLite"
+      desc "Set up Rails Pulse for performance monitoring (its own SQLite file, or a database on the primary's server)"
 
       class_option :database, type: :string, default: "rails_pulse",
         desc: "Database name for Rails Pulse (default: rails_pulse)"
@@ -52,7 +52,7 @@ module Pu
         end
 
         # Then add database config
-        add_sqlite_database(@db_name, migrations_paths: "db/rails_pulse_migrate", schema_dump: false)
+        add_secondary_database(@db_name, migrations_paths: "db/rails_pulse_migrate", schema_dump: false)
 
         # rails_pulse ships a callable schema lambda; load it idempotently
         # against the rails_pulse connection.

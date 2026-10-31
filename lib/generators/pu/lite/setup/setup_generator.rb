@@ -6,12 +6,15 @@ module Pu
   module Lite
     class SetupGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
+      include PlutoniumGenerators::Concerns::RequiresSqlite
 
       desc "Set up SQLite with proper configuration"
 
       RAILS_8_VERSION = ::Gem::Version.new("8.0.0")
 
       def start
+        return unless sqlite_primary?
+
         ensure_sqlite3_version
 
         # Add enhanced adapter for Rails 7

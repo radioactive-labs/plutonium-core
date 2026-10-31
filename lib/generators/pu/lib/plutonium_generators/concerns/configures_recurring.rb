@@ -6,7 +6,7 @@ module PlutoniumGenerators
       ENV_KEYS = %w[production development staging test].freeze
 
       # Pure transform of a config/recurring.yml string. No file IO — testable
-      # in isolation, mirroring ConfiguresSqlite::DatabaseYAML.
+      # in isolation, mirroring ConfiguresDatabase::DatabaseYAML.
       class RecurringYAML
         # Returns new content with `tasks_yaml` injected. If the file is
         # env-scoped (has top-level production:/development:/... keys), the
