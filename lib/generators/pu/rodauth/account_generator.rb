@@ -6,6 +6,7 @@ require "#{__dir__}/concerns/account_selector"
 require "#{__dir__}/concerns/feature_selector"
 require "#{__dir__}/migration_generator"
 require "#{__dir__}/../lib/plutonium_generators/concerns/actions"
+require "#{__dir__}/../lib/plutonium_generators"
 
 module Pu
   module Rodauth

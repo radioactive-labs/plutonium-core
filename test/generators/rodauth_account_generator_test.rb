@@ -2,6 +2,7 @@
 
 require "test_helper"
 require "rails/generators/test_case"
+require "open3"
 require "generators/pu/rodauth/account_generator"
 
 class RodauthAccountGeneratorTest < Rails::Generators::TestCase
@@ -74,5 +75,21 @@ class RodauthAccountGeneratorTest < Rails::Generators::TestCase
       # Should still register with a name
       assert_match(/configure ::TestAccountRodauthPlugin, :test_account/, content)
     end
+  end
+
+  test "resolves extra-attribute parsing when loaded on its own" do
+    # Run in a fresh process: in this suite other generators have already
+    # loaded ModelGeneratorBase, which would hide a missing require.
+    script = <<~RUBY
+      require "rails"
+      require "rails/generators"
+      require "generators/pu/rodauth/account_generator"
+      print PlutoniumGenerators::ModelGeneratorBase::GeneratedAttribute.parse("users", "nickname:string").name
+    RUBY
+    lib = File.expand_path("../../lib", __dir__)
+    out, err, status = Open3.capture3(RbConfig.ruby, "-I", lib, "-e", script)
+
+    assert status.success?, err
+    assert_equal "nickname", out
   end
 end
