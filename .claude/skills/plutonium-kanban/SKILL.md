@@ -140,7 +140,7 @@ shows the dash by design, so cards keep an even height.)
 
 ### `realtime`
 
-Broadcasts refreshed column turbo-frames to all board subscribers after every successful move. Requires ActionCable. Opt in per-board:
+After every successful move, tells all board subscribers to reload the affected column frames. Each viewer reloads under its own policy scope and filters; the broadcast never carries card HTML. Requires ActionCable. Opt in per-board:
 
 ```ruby
 realtime true

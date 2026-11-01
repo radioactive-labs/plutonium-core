@@ -489,7 +489,7 @@ kanban do
 end
 ```
 
-After a successful move, Plutonium broadcasts the updated column frames to all connected viewers on the same stream. Stream names are tenant-scoped: viewers of different tenant entities can never cross-contaminate each other's streams. See [Reference › Kanban › DSL](/reference/kanban/dsl#realtime) for the stream name format.
+After a successful move, Plutonium tells all connected viewers on the same stream which columns changed, and each viewer reloads those column frames itself. The broadcast carries no cards: viewers of the same board can see different cards (your policy's `relation_scope`, their own search and filters), so each reload renders under that viewer's own scope. Stream names are tenant-scoped: viewers of different tenant entities never share a stream. See [Reference › Kanban › DSL](/reference/kanban/dsl#realtime) for the stream name format.
 
 ### Setup (required for realtime to actually update other viewers)
 

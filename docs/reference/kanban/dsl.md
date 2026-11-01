@@ -103,7 +103,7 @@ No ordering is applied. Cards render in the relation's natural order. On drop, o
 realtime true
 ```
 
-Enables ActionCable broadcasting after every successful move. After a drop, Plutonium pushes the refreshed column frames to all viewers subscribed to this board's stream.
+Enables ActionCable broadcasting after every successful move. After a drop, Plutonium broadcasts a `reload_frame` Turbo Stream for each affected column to all viewers subscribed to this board's stream. Each viewer reloads the frame from its own `src`, so the cards are rendered under that viewer's policy scope, search and filters. The broadcast itself never contains card HTML.
 
 **Stream name format:**
 

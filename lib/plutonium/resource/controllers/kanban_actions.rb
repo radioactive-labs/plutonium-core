@@ -312,23 +312,27 @@ module Plutonium
 
           respond_to do |format|
             format.turbo_stream do
-              # The column-frame updates are what other viewers need to see — this
-              # is the shared, broadcastable payload.
-              column_streams = [turbo_stream.update("kanban-col-#{from.key}", render_kanban_column_html(from))]
-              column_streams << turbo_stream.update("kanban-col-#{to.key}", render_kanban_column_html(to)) if from.key != to.key
+              # The mover gets the touched columns rendered directly.
+              moved_columns = [from]
+              moved_columns << to if from.key != to.key
+              column_streams = moved_columns.map do |column|
+                turbo_stream.update("kanban-col-#{column.key}", render_kanban_column_html(column))
+              end
 
-              # Broadcast the frame updates to other connected viewers of this
-              # board, when realtime broadcasting is enabled. The mover will also
-              # receive this broadcast (they are subscribed to the stream too) — but
-              # re-rendering the same frames is idempotent, so the double update is
-              # harmless. The modal-close stream is deliberately EXCLUDED: only the
-              # mover has this modal open, so closing it for everyone would blow
-              # away an unrelated modal another viewer might have open.
+              # Tell other connected viewers which columns changed, when realtime
+              # broadcasting is enabled. The broadcast is a content-free
+              # reload_frame signal, never the HTML rendered above: that HTML is
+              # built from the mover's relation scope, search, filters and
+              # permitted actions, and viewers sharing a stream (same tenant) can
+              # still see different cards. Each viewer reloads the frame from its
+              # own src, so it re-renders under its own scope. The mover receives
+              # the signal too; the reload just morphs to the same cards. Mover-only
+              # streams (modal close, toasts) are never broadcast.
               if board.realtime?
                 Plutonium::Kanban::Broadcaster.broadcast(
                   resource_class: resource_class,
                   scoped_entity: scoped_to_entity? ? current_scoped_entity : nil,
-                  content: column_streams.join
+                  content: moved_columns.map { |column| turbo_stream.action(:reload_frame, "kanban-col-#{column.key}") }.join
                 )
               end
 
