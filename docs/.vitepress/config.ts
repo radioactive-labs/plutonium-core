@@ -69,6 +69,14 @@ export default defineConfig(withMermaid({
   },
   srcExclude: ['superpowers/**'],
   vite: {
+    // mermaid imports these CommonJS packages, which the browser can't load
+    // without pre-bundling. withMermaid's own include list misses them.
+    optimizeDeps: {
+      include: [
+        "mermaid > fastdom",
+        "mermaid > fastdom/extensions/fastdom-promised.js",
+      ],
+    },
     plugins: [
       // Generates llms.txt, llms-full.txt, and a raw .md twin for every page.
       llmstxt({
