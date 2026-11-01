@@ -17,6 +17,11 @@ module Plutonium
     # Two viewers are on the SAME stream only when they share identical
     # resource_class AND scoped_entity — different tenants can never share a
     # stream because their GID params are distinct by definition.
+    #
+    # Viewers within one tenant DO share a stream, yet may see different cards
+    # (policy relation_scope, their own search and filters). So never broadcast
+    # HTML rendered for one user: send content-free signals (e.g. reload_frame)
+    # and let each viewer re-fetch under its own scope.
     module Broadcaster
       extend self
 

@@ -83,6 +83,33 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # The broadcast reaches every viewer of the board, but each viewer may see a
+  # different set of cards (policy relation_scope, their own search/filters).
+  # Cards rendered for the mover must never be pushed to anyone else, so the
+  # broadcast is a content-free signal: each viewer reloads the affected column
+  # frames from their own src, under their own scope.
+  test "realtime broadcast asks viewers to reload frames and carries no card content" do
+    with_realtime_board do
+      captured = capture_turbo_stream_broadcasts(board_stream_name) do
+        post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
+          headers: {"Accept" => TURBO_STREAM_ACCEPT}
+        assert_response :ok
+      end
+
+      assert_equal %w[reload_frame], captured.map { |node| node["action"] }.uniq
+      captured.each do |node|
+        assert_empty node.at("template").inner_html.strip, "broadcast element must not carry rendered content"
+      end
+      payload = captured.map(&:to_html).join
+      refute_includes payload, "Todo Alpha", "the moved card must not be broadcast"
+      refute_includes payload, "Doing One", "other cards in the column must not be broadcast"
+
+      # The mover still gets the rendered columns directly in the response.
+      assert_includes response.body, %(action="update")
+      assert_includes response.body, "Todo Alpha"
+    end
+  end
+
   test "realtime board same-column reorder broadcasts only one column frame" do
     @todo_b = Task.create!(title: "Todo Beta", status: "todo")
 
