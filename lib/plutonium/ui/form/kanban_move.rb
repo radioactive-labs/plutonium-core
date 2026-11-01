@@ -12,15 +12,20 @@ module Plutonium
       #   1. It POSTs to the record's `kanban_move` member route rather than the
       #      interaction's own commit URL, so Task 4's atomic handler runs the
       #      interaction AND repositions the card in one request.
-      #   2. It carries the move context (from_column/to_column/to_index) as
+      #   2. It carries the move context (from_column/to_column/to_index, and the
+      #      columns' from_limit/to_limit when sent) as
       #      top-level hidden fields so the move handler knows where the card
       #      came from and where it landed.
       class KanbanMove < Interaction
         private
 
-        # POST to <member>/kanban_move for the dropped record.
+        # POST to <member>/kanban_move for the dropped record, carrying the
+        # board's query (search / filters / scope) so the move re-renders the
+        # columns as the mover sees them.
         def form_action
-          resource_url_for(resource_record!, action: :kanban_move)
+          url = resource_url_for(resource_record!, action: :kanban_move)
+          query = request.query_parameters.except(*Plutonium::Resource::Controllers::KanbanActions::KANBAN_REQUEST_KEYS)
+          query.empty? ? url : "#{url}?#{query.to_query}"
         end
 
         def form_template
@@ -30,13 +35,16 @@ module Plutonium
 
         # Emit the move context as top-level params (NOT namespaced under
         # interaction[...]) — the move handler reads params[:from_column] etc.
-        # Values come from the GET request's query string.
+        # Values come from the GET request's query string. from_limit/to_limit
+        # keep each column's expanded card count after the move.
         def render_kanban_move_context
           {
             from_column: params[:from_column],
             to_column: params[:to_column],
-            to_index: params[:to_index]
-          }.each do |name, value|
+            to_index: params[:to_index],
+            from_limit: params[:from_limit],
+            to_limit: params[:to_limit]
+          }.compact.each do |name, value|
             input(type: :hidden, name: name.to_s, value: value)
           end
         end

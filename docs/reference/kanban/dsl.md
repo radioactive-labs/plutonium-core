@@ -39,9 +39,22 @@ kanban do ... end
 per_column 25
 ```
 
-Maximum cards rendered per column. When the column total exceeds `n`, a `+N more` footer appears. Column actions with `on: :all` still operate against the full column set; `on: :visible` is capped to the rendered subset.
+Maximum cards rendered per column. The count badges always show the column's full total. When the total exceeds `n`, the footer shows `+N more` and a link that loads `n` more cards into that column's frame (`kanban_limit` on the column frame URL), up to `KANBAN_COLUMN_LIMIT_MAX` (500). A move keeps each touched column's expanded count. Column actions with `on: :all` operate on the full column set; `on: :visible` on the cards currently shown.
 
 Default: `nil` (unlimited).
+
+---
+
+### `column_summary`
+
+```ruby
+column_summary ->(relation) { number_to_currency(relation.sum(:amount)) }
+column_summary { |relation, column| "#{relation.count} in #{column.label}" }
+```
+
+A line rendered under each column header. Called with the column's full relation (policy scope, search and filters applied; not capped by `per_column`) and, unless it is a one-argument lambda, the column. Return a String, a Phlex component, or `nil`.
+
+Default: `nil` (no summary line).
 
 ---
 

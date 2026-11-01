@@ -15,6 +15,28 @@ module Plutonium
         assert_instance_of Board, board
       end
 
+      def test_column_summary_defaults_to_nil
+        board = DSL.build { column :todo }
+        assert_nil board.column_summary
+        assert_nil board.summarize(:relation, board.columns.first)
+      end
+
+      def test_column_summary_lambda_with_one_argument_gets_the_relation
+        board = DSL.build do
+          column_summary ->(relation) { "rel=#{relation}" }
+          column :todo
+        end
+        assert_equal "rel=all", board.summarize("all", board.columns.first)
+      end
+
+      def test_column_summary_block_gets_relation_and_column
+        board = DSL.build do
+          column_summary { |relation, column| "#{column.key}=#{relation}" }
+          column :todo
+        end
+        assert_equal "todo=all", board.summarize("all", board.columns.first)
+      end
+
       def test_build_with_block_returns_board
         board = DSL.build { column :todo }
         assert_instance_of Board, board

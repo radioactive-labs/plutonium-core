@@ -64,6 +64,18 @@ class AdminPortal::KanbanMoveFormTest < ActionDispatch::IntegrationTest
       "to_index hidden field must carry the query value")
   end
 
+  test "form keeps the board query and the columns' limits" do
+    get kanban_move_form_url(@task, from_column: "doing", to_column: "lost", to_index: 0,
+      from_limit: 50, to_limit: 75, q: {search: "Doing"})
+
+    assert_response :ok
+    form = Nokogiri::HTML(response.body).css("form").find { |f| f["action"].to_s.include?("/kanban_move") }
+    query = Rack::Utils.parse_nested_query(URI.parse(form["action"]).query)
+    assert_equal({"q" => {"search" => "Doing"}}, query, "only the board query rides on the action URL")
+    assert_equal "50", form.at_css(%(input[name="from_limit"]))["value"]
+    assert_equal "75", form.at_css(%(input[name="to_limit"]))["value"]
+  end
+
   # ─── Criterion 3: non-drop column → 422 ────────────────────────────────────
 
   test "to_column without a enter_interaction returns 422" do

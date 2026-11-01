@@ -65,11 +65,16 @@ module Plutonium
         # advertises data-kanban-drop-interaction + data-kanban-drop-form-url-
         # template so Task 6's Stimulus controller opens the interaction modal on
         # drop instead of committing the move immediately.
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, board_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil, drop_form_url_template: nil, drop_immediate: false, drop_confirm: nil)
+        # summary: the board's column_summary result (String, Phlex component or
+        # nil), shown under the header.
+        # load_more_url: the column frame URL that renders more cards, or nil.
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, board_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil, drop_form_url_template: nil, drop_immediate: false, drop_confirm: nil, summary: nil, load_more_url: nil)
           @column = column
           @cards = cards
           @total = total
           @per_column = per_column
+          @summary = summary
+          @load_more_url = load_more_url
           @resource_definition = resource_definition
           @resource_fields = resource_fields
           @column_action_data = column_action_data
@@ -155,7 +160,7 @@ module Plutonium
               class: "text-xs font-semibold text-[var(--pu-text-muted)] " \
                      "[writing-mode:vertical-lr] rotate-180"
             ) { plain column.label }
-            span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain cards.size.to_s }
+            span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain total.to_s }
             # Expand toggle button — the primary interactive seam for
             # collapsing/expanding. data-kanban-column-key is on this button so
             # the integration test can assert the contract without JS execution.
@@ -188,6 +193,7 @@ module Plutonium
             data: {kanban_role: "body"}
           ) do
             render_header
+            render_summary if @summary.present?
             render_card_list
             render_more_footer if more_count > 0
           end
@@ -226,8 +232,19 @@ module Plutonium
 
         # Plain card-count badge for columns without a WIP limit — mirrors the
         # count shown on the collapsed strip so the number is visible either way.
+        # The column's total, not the per_column cards rendered.
         def render_count_badge
-          span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain cards.size.to_s }
+          span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain total.to_s }
+        end
+
+        def render_summary
+          div(
+            class: "px-3 py-1 text-xs font-medium tabular-nums text-[var(--pu-text-muted)] " \
+                   "border-b border-[var(--pu-border)] bg-[var(--pu-surface)]",
+            data: {kanban_column_summary: column.key.to_s}
+          ) do
+            @summary.is_a?(Phlex::SGML) ? render(@summary) : plain(@summary.to_s)
+          end
         end
 
         def render_wip_badge
@@ -239,7 +256,7 @@ module Plutonium
             ),
             title: over ? t("plutonium.kanban.column.wip_limit_exceeded") : t("plutonium.kanban.column.wip_limit", limit: column.wip)
           ) do
-            plain "#{cards.size}/#{column.wip}"
+            plain "#{total}/#{column.wip}"
           end
         end
 
@@ -278,11 +295,24 @@ module Plutonium
         # "+N more" footer
         # ---------------------------------------------------------------
 
+        # "+N more", plus a link that loads the next per_column cards into this
+        # column's frame when the controller supplied one.
         def render_more_footer
-          div(class: "px-3 py-2 border-t border-[var(--pu-border)] bg-[var(--pu-surface)]") do
+          div(class: "px-3 py-2 flex items-center justify-between gap-2 border-t border-[var(--pu-border)] bg-[var(--pu-surface)]") do
             span(class: "text-xs text-[var(--pu-text-muted)]") do
               plain t("plutonium.kanban.column.more", count: more_count)
             end
+            render_load_more_link if @load_more_url
+          end
+        end
+
+        def render_load_more_link
+          a(
+            href: @load_more_url,
+            class: "text-xs font-medium text-[var(--pu-primary)] hover:underline",
+            data: {turbo_frame: "kanban-col-#{column.key}", kanban_load_more: column.key.to_s}
+          ) do
+            plain t("plutonium.kanban.column.load_more", count: [more_count, per_column || more_count].min)
           end
         end
 
@@ -387,7 +417,7 @@ module Plutonium
         # ---------------------------------------------------------------
 
         def wip_over_limit?
-          column.wip && cards.size > column.wip
+          column.wip && total > column.wip
         end
 
         def more_count

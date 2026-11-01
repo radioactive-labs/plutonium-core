@@ -11,6 +11,9 @@ en:
         more:
           one: "+%{count} more"
           other: "+%{count} more"
+        load_more:
+          one: "Show %{count} more"
+          other: "Show %{count} more"
         add_to: "Add to %{column}"
         add: "+ Add"
       move:
