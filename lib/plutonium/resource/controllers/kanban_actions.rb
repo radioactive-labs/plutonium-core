@@ -57,6 +57,13 @@ module Plutonium
           end
         end
 
+        # The most cards one column renders, however far "Show more" is followed.
+        # Past it, the "+N more" count stays as a plain label.
+        KANBAN_COLUMN_LIMIT_MAX = 500
+
+        # Per-column and per-move params, never part of the board's own query.
+        KANBAN_REQUEST_KEYS = %w[column format kanban_reload kanban_limit from_column to_column to_index from_limit to_limit].freeze
+
         included do
           prepend ReloadRedirects
 
@@ -313,10 +320,13 @@ module Plutonium
           respond_to do |format|
             format.turbo_stream do
               # The mover gets the touched columns rendered directly.
+              # Each column keeps the card limit the mover had expanded it to.
+              limits = {from.key => params[:from_limit]}
+              limits[to.key] = params[:to_limit] if from.key != to.key
               moved_columns = [from]
               moved_columns << to if from.key != to.key
               column_streams = moved_columns.map do |column|
-                turbo_stream.update("kanban-col-#{column.key}", render_kanban_column_html(column))
+                turbo_stream.update("kanban-col-#{column.key}", render_kanban_column_html(column, limit: limits[column.key]))
               end
 
               # Tell other connected viewers which columns changed, when realtime
@@ -600,7 +610,7 @@ module Plutonium
             return render(html: empty, layout: false)
           end
 
-          framed = view_context.content_tag("turbo-frame", render_kanban_column_html(column), id: frame_id)
+          framed = view_context.content_tag("turbo-frame", render_kanban_column_html(column, limit: params[:kanban_limit]), id: frame_id)
           render html: framed, layout: false
         end
 
@@ -608,7 +618,11 @@ module Plutonium
         #
         # Accepts either a Plutonium::Kanban::Column object or a column key
         # (String/Symbol). Returns an empty SafeBuffer for unknown keys.
-        def render_kanban_column_html(column_or_key)
+        #
+        # limit: the requested card count (a "Show more" kanban_limit, or a
+        # move's from_limit/to_limit), clamped by #kanban_column_limit. Ignored
+        # when the board has no per_column cap.
+        def render_kanban_column_html(column_or_key, limit: nil)
           board = current_kanban_board
 
           column = if column_or_key.is_a?(Plutonium::Kanban::Column)
@@ -623,9 +637,10 @@ module Plutonium
           scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
           ordered = board.position_config_for(current_definition).order(scoped)
 
-          if board.per_column
+          limit = kanban_column_limit(board, limit)
+          if limit
             total = ordered.count
-            cards = ordered.limit(board.per_column).to_a
+            cards = ordered.limit(limit).to_a
           else
             cards = ordered.to_a
             total = cards.size
@@ -636,7 +651,7 @@ module Plutonium
           # move action from needing a `permitted_attributes_for_kanban_move`
           # method — kanban deliberately has no permitted-attributes concept.
           column_action_data = column.actions.map do |col_action|
-            {action: col_action, ids: kanban_column_action_ids(column, on: col_action.on)}
+            {action: col_action, ids: kanban_column_action_ids(column, on: col_action.on, limit:)}
           end
 
           column_add_url = if column.add? && current_policy.allowed_to?(:create?)
@@ -670,6 +685,8 @@ module Plutonium
             cards:,
             total:,
             per_column: board.per_column,
+            summary: board.summarize(scoped, column),
+            load_more_url: kanban_load_more_url(column, board, limit, total),
             resource_definition: current_definition,
             resource_fields: permitted_attributes_for("index"),
             column_action_data:,
@@ -693,8 +710,39 @@ module Plutonium
         # because this also runs under the kanban_move POST, whose request path is
         # the member move URL, not the collection path.
         def kanban_board_url
-          board_params = request.query_parameters.except("column", "format").merge("view" => "kanban")
-          "#{resource_url_for(resource_class)}?#{board_params.to_query}"
+          "#{resource_url_for(resource_class)}?#{kanban_board_query.merge("view" => "kanban").to_query}"
+        end
+
+        # The board's query (search / filters / scope / sort) from the current
+        # request, minus the per-column and per-move keys. The kanban controller
+        # sends it on the move POST's URL, so a move re-renders the columns under
+        # the same query the mover sees.
+        def kanban_board_query
+          request.query_parameters.except(*KANBAN_REQUEST_KEYS)
+        end
+
+        # How many cards a column renders: the requested limit, at least
+        # per_column and at most KANBAN_COLUMN_LIMIT_MAX. nil (no cap) when the
+        # board has no per_column.
+        def kanban_column_limit(board, requested)
+          return unless board.per_column
+
+          max = [board.per_column, KANBAN_COLUMN_LIMIT_MAX].max
+          requested.to_i.clamp(board.per_column, max)
+        end
+
+        # The column frame URL that renders per_column more cards, or nil when
+        # every card is shown or the maximum is reached. The link sits inside the
+        # column's turbo-frame, so following it re-renders only that column, and
+        # the frame keeps the new src for later reloads.
+        def kanban_load_more_url(column, board, limit, total)
+          return unless limit && total > limit && limit < KANBAN_COLUMN_LIMIT_MAX
+
+          query = kanban_board_query.merge(
+            "view" => "kanban", "column" => column.key.to_s,
+            "kanban_limit" => [limit + board.per_column, KANBAN_COLUMN_LIMIT_MAX].min
+          )
+          "#{resource_url_for(resource_class)}?#{query.to_query}"
         end
 
         # Tags a board-bound redirect with the one-shot kanban_reload marker (and
@@ -767,13 +815,15 @@ module Plutonium
         #                 position ordering + limit, then plucks ids).
         #
         # Any other value falls back to :all behaviour.
-        def kanban_column_action_ids(column, on:)
+        # limit: the column's current card limit, so :visible matches the cards
+        # on screen after "Show more". Defaults to per_column.
+        def kanban_column_action_ids(column, on:, limit: current_kanban_board.per_column)
           scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
           case on.to_sym
           when :visible
             board = current_kanban_board
             ordered = board.position_config_for(current_definition).order(scoped)
-            limited = board.per_column ? ordered.limit(board.per_column) : ordered
+            limited = limit ? ordered.limit(limit) : ordered
             limited.pluck(resource_class.primary_key)
           else # :all and any unknown value
             scoped.pluck(resource_class.primary_key)

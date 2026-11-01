@@ -3,13 +3,13 @@
 module Plutonium
   module Kanban
     class Board
-      attr_reader :columns, :columns_block, :card_fields, :per_column, :position_config, :show_in
+      attr_reader :columns, :columns_block, :card_fields, :per_column, :position_config, :show_in, :column_summary
 
       # nil means "inherit the definition's show_in"; the board only overrides
       # when explicitly set to :modal or :page.
       VALID_SHOW_IN = [nil, :modal, :page].freeze
 
-      def initialize(columns:, columns_block:, card_fields:, per_column:, realtime:, position_config:, lazy:, show_in: nil)
+      def initialize(columns:, columns_block:, card_fields:, per_column:, realtime:, position_config:, lazy:, show_in: nil, column_summary: nil)
         unless VALID_SHOW_IN.include?(show_in)
           raise ArgumentError, "show_in must be one of #{VALID_SHOW_IN.compact.inspect} (or unset), got #{show_in.inspect}"
         end
@@ -22,6 +22,7 @@ module Plutonium
         @position_config = position_config
         @lazy = lazy
         @show_in = show_in
+        @column_summary = column_summary
         @columns.each(&:freeze)
         @columns.freeze
         @card_fields&.freeze
@@ -31,6 +32,17 @@ module Plutonium
       def realtime? = !!@realtime
       def lazy? = !!@lazy
       def dynamic? = !@columns_block.nil?
+
+      # The column_summary result for one column, given its full relation.
+      def summarize(relation, column)
+        return unless @column_summary
+
+        if @column_summary.lambda? && @column_summary.arity == 1
+          @column_summary.call(relation)
+        else
+          @column_summary.call(relation, column)
+        end
+      end
 
       # Resolves the board's effective show_in, falling back to the definition's
       # `show_in` when the board doesn't override it. Pass the resource definition.

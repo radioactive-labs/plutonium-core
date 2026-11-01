@@ -83,7 +83,8 @@ import { beginDrag, computeDropIndex, endDrag, hideInsertionMarker, showInsertio
 //                marked pu-kanban-no-drop we skip preventDefault so the native
 //                "no entry" cursor shows instead.
 // 3. drop      — compute to_index (vertical cursor position within the column),
-//                POST {from_column, to_column, to_index} to the move endpoint,
+//                POST {from_column, to_column, to_index, from_limit, to_limit} to
+//                the move endpoint (its URL carrying the board's query),
 //                and feed the Turbo Stream response to Turbo.renderStreamMessage.
 //                On success the server re-renders both column frames; on 422 it
 //                re-renders only the source column so the card snaps back — the
@@ -248,8 +249,12 @@ export default class extends Controller {
   // query params. The server serialises params sorted (Hash#to_query) while
   // URLSearchParams preserves insertion order, so raw string comparison would
   // report a false difference and reload every frame on every nav.
+  //
+  // kanban_limit is ignored: a column the user expanded with "Show more" keeps
+  // its extra cards until the board query itself changes.
   #canonicalUrl(src) {
     const url = new URL(src, window.location.origin)
+    url.searchParams.delete("kanban_limit")
     url.searchParams.sort()
     return `${url.pathname}?${url.searchParams.toString()}`
   }
@@ -397,6 +402,40 @@ export default class extends Controller {
 
   #columnFrames() {
     return this.element.querySelectorAll("turbo-frame[data-kanban-col-frame]")
+  }
+
+  // The board's own query (search / filters / scope / sort): the page's params
+  // minus the per-column keys. Sent with every move so the server re-renders
+  // the touched columns under the query this user sees.
+  #boardQuery() {
+    const params = new URLSearchParams(window.location.search)
+    ;["column", "kanban_reload", "kanban_limit"].forEach(key => params.delete(key))
+    return params
+  }
+
+  // from_limit / to_limit: the card count each touched column was expanded to
+  // with "Show more" (its frame src's kanban_limit), so the move doesn't shrink
+  // it back to per_column. Omitted for columns showing the default.
+  #moveLimits(fromColumn, toColumn) {
+    const limits = {}
+    const fromLimit = this.#frameLimit(fromColumn)
+    const toLimit = this.#frameLimit(toColumn)
+    if (fromLimit) limits.from_limit = fromLimit
+    if (toLimit) limits.to_limit = toLimit
+    return limits
+  }
+
+  #frameLimit(key) {
+    const frame = this.element.querySelector(`turbo-frame[data-kanban-col-frame="${key}"]`)
+    const src = frame?.getAttribute("src")
+    if (!src) return null
+    return new URL(src, window.location.origin).searchParams.get("kanban_limit")
+  }
+
+  // Appends the board query to a URL, if there is one.
+  #withBoardQuery(url) {
+    const query = this.#boardQuery().toString()
+    return query ? `${url}?${query}` : url
   }
 
   #isColumnFrame(el) {
@@ -549,7 +588,7 @@ export default class extends Controller {
   // source frame so the card snaps back — the controller never hand-manages
   // rollback state.
   async #submitMove(recordId, { fromColumn, toColumn, toIndex }) {
-    const url = this.moveUrlTemplateValue.replace("__ID__", recordId)
+    const url = this.#withBoardQuery(this.moveUrlTemplateValue.replace("__ID__", recordId))
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? ""
 
     try {
@@ -564,6 +603,7 @@ export default class extends Controller {
           from_column: fromColumn,
           to_column: toColumn,
           to_index: toIndex,
+          ...this.#moveLimits(fromColumn, toColumn),
         }),
         credentials: "same-origin",
       })
@@ -619,11 +659,15 @@ export default class extends Controller {
     const frame = document.getElementById("remote_modal")
     if (!frame || !template) return false
 
-    const params = new URLSearchParams({
+    // The board query rides along so the modal's form posts the move under it
+    // (see Form::KanbanMove#form_action), with the columns' limits.
+    const params = this.#boardQuery()
+    Object.entries({
       from_column: fromColumn,
       to_column: toColumn,
       to_index: toIndex,
-    })
+      ...this.#moveLimits(fromColumn, toColumn),
+    }).forEach(([key, value]) => params.set(key, value))
     const url = `${template.replace("__ID__", recordId)}?${params.toString()}`
 
     // Point the modal frame at the interaction form. On success the server

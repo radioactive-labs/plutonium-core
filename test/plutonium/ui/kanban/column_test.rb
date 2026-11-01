@@ -448,6 +448,54 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
 
   private
 
+  # Counts are the column's total, not the per_column cards rendered.
+  def test_count_badges_show_the_total_when_capped
+    component = build_component(build_column(:todo), cards: stub_records(2), total: 12, per_column: 2)
+    component.define_singleton_method(:render_cards) {}
+
+    html = component.call
+
+    assert_equal 2, html.scan(%r{font-mono">12</span>}).size, "header badge and collapsed strip both show 12"
+    refute_match(%r{font-mono">2</span>}, html)
+  end
+
+  def test_wip_badge_counts_the_total
+    component = build_component(build_column(:doing, wip: 3), cards: stub_records(2), total: 5, per_column: 2)
+    component.define_singleton_method(:render_cards) {}
+
+    html = component.call
+
+    assert_match(%r{5/3}, html)
+    assert_match(/pu-badge-danger/, html, "5 cards over a WIP of 3 is over the limit")
+  end
+
+  def test_renders_summary_under_the_header
+    component = Plutonium::UI::Kanban::Column.new(column: build_column(:todo), cards: [], total: 0, per_column: 10,
+      resource_definition: nil, resource_fields: [], summary: "GHS 1,200.00")
+
+    html = component.call
+
+    assert_match(/data-kanban-column-summary="todo"[^>]*>GHS 1,200.00</, html)
+  end
+
+  def test_no_summary_row_without_a_summary
+    html = build_component(build_column(:todo), cards: [], total: 0).call
+    refute_match(/data-kanban-column-summary/, html)
+  end
+
+  def test_load_more_link_targets_the_column_frame
+    component = Plutonium::UI::Kanban::Column.new(column: build_column(:todo), cards: stub_records(2), total: 9,
+      per_column: 2, resource_definition: nil, resource_fields: [], load_more_url: "/tasks?column=todo&kanban_limit=4")
+    component.define_singleton_method(:render_cards) {}
+
+    html = component.call
+
+    assert_match(%r{<a[^>]*href="/tasks\?column=todo&amp;kanban_limit=4"}, html)
+    assert_match(/data-turbo-frame="kanban-col-todo"/, html)
+    assert_match(/Show 2 more/, html)
+    assert_match(/\+7 more/, html)
+  end
+
   def build_column(key, **opts)
     Plutonium::Kanban::Column.new(key, **opts)
   end

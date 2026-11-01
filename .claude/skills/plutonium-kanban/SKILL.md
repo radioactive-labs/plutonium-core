@@ -100,7 +100,8 @@ index_views :kanban           # remove table; kanban is the only view
 
 | DSL call | Purpose | Default |
 |---|---|---|
-| `per_column N` | Cap cards rendered per column; `+N more` footer when exceeded | unlimited |
+| `per_column N` | Cap cards rendered per column; footer shows `+N more` and a "Show N more" link that loads the next cards into the column | unlimited |
+| `column_summary ->(relation) { … }` | Line under each column header, computed over the full column relation (e.g. a money total) | none |
 | `position_on :attr` | Custom attribute name for ordering (Mode A) | `:position` |
 | `position_on :attr do \|move\| … end` | BYO positioning block (Mode B) | - |
 | `position_on false` | No ordering or repositioning (Mode C) | - |

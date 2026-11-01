@@ -24,6 +24,7 @@ module Plutonium
         @position_config = nil
         @lazy = true
         @show_in = nil
+        @column_summary = nil
       end
 
       def column(key, **opts, &blk)
@@ -49,6 +50,16 @@ module Plutonium
       # When unset, the board inherits the definition's `show_in` (default :page).
       def show_in(mode) = @show_in = mode # standard:disable Style/TrivialAccessors
 
+      # A line under each column header, computed over the column's FULL relation
+      # (every card under the viewer's scope, search and filters, not just the
+      # per_column shown). Called with (relation, column); a one-argument lambda
+      # gets only the relation. Return a String, a Phlex component, or nil.
+      #
+      #   column_summary ->(relation) { number_to_currency(relation.sum(:amount)) }
+      def column_summary(callable = nil, &block)
+        @column_summary = callable || block
+      end
+
       def position_on(attr = :position, &blk)
         @position_config =
           if attr == false
@@ -69,7 +80,8 @@ module Plutonium
           realtime: @realtime,
           position_config: @position_config,
           lazy: @lazy,
-          show_in: @show_in
+          show_in: @show_in,
+          column_summary: @column_summary
         )
       end
     end
