@@ -6,6 +6,8 @@ Three closely-coupled concerns:
 2. **[Nested resources](./nested-resources)**: parent/child URLs; parent scoping takes precedence over entity scoping.
 3. **[Invites](./invites)**: onboarding users into a tenant's membership.
 
+Tenants can also build their own roles from code-derived permissions with the experimental [RBAC](/reference/rbac/) subsystem: the membership holds roles per tenant, and roles created in an entity-scoped portal belong to that tenant. See [RBAC › Tenant roles](/reference/rbac/roles#tenant-roles).
+
 ## How entity scoping fits together
 
 Three cooperating pieces:
@@ -34,3 +36,4 @@ Configure the portal once. The policy and model conventions then carry tenancy a
 - [App › Portals](/reference/app/portals): `scope_to_entity` engine config
 - [Guides › Multi-tenancy](/guides/multi-tenancy): task-oriented walkthrough
 - [Guides › User invites](/guides/user-invites): invitation setup recipe
+- [RBAC › Roles](/reference/rbac/roles): tenant roles and invites with roles

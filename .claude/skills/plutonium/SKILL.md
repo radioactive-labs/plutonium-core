@@ -89,6 +89,7 @@ This is the global "look before you leap"; each targeted skill carries its own A
 | **[[plutonium-auth]]** | Rodauth install, account types (basic / admin / SaaS), profile resource, security section |
 | **[[plutonium-tenancy]]** | Entity scoping (`associated_with`, `default_relation_scope`, three model shapes), nested resources, invites |
 | **[[plutonium-testing]]** | `pu:test:install`, `pu:test:scaffold`, `ResourceCrud`/`ResourcePolicy`/`ResourceDefinition`/`ResourceModel`/`NestedResource`/`PortalAccess`/`ResourceInteraction`, `AuthHelpers` |
+| **[[plutonium-rbac]]** | Experimental roles & permissions: `pu:rbac:install`, `rbac_holder`, permission keys, `Plutonium::Rbac::Policy`, restricted fields, system + tenant roles, assigning roles, escalation guard, invites with roles |
 | **[[plutonium-wizard]]** | Multi-step flows: the wizard DSL (`step`/`review`/`using:`/`condition:`, per-step `on_submit`/`persist`/`on_rollback`, `execute`), anchoring & resume, one-time wizards + gate, registration (`wizard` macro + `register_wizard`), storage/config + SweepJob |
 
 ## Greenfield bootstrap bundle
@@ -128,6 +129,7 @@ Add when relevant:
 | Configure Tailwind, register Stimulus controllers, edit design tokens, theme forms/displays/tables, write a custom layout | **[[plutonium-ui]]** |
 | Install Rodauth, set up accounts, configure login flow, add the profile resource | **[[plutonium-auth]]** |
 | Write tests for a resource, run `pu:test:scaffold`, include `Plutonium::Testing::*` concerns | **[[plutonium-testing]]** |
+| Add roles or permissions, decide "who can do what" per role, restrict a field to some roles, manage tenant roles, `pu:rbac:install` | **[[plutonium-rbac]]** |
 | Build a multi-step flow, onboarding, checkout, branching create, register a `wizard` / `register_wizard`, gate a one-time wizard | **[[plutonium-wizard]]** |
 
 ## Resource architecture at a glance
@@ -167,6 +169,7 @@ Every Plutonium generator is discoverable via `rails g pu:<tab>`. Always pass `-
 | `pu:profile:install / :setup / :conn` | Profile resource + security section | `plutonium-auth` |
 | `pu:invites:install` | User invitations package | `plutonium-tenancy` |
 | `pu:invites:invitable NAME` | Mark a model as invitable | `plutonium-tenancy` |
+| `pu:rbac:install --holders=... --dest=PORTAL` | Experimental RBAC: holders, policy mixin, role resource | `plutonium-rbac` |
 | `pu:eject:layout` | Eject base layout for customization | `plutonium-ui` |
 | `pu:eject:shell` | Eject topbar/sidebar partials | `plutonium-ui` |
 | `pu:test:install` | Install `Plutonium::Testing` scaffolding | `plutonium-testing` |

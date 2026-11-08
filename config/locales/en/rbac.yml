@@ -1,0 +1,20 @@
+en:
+  errors:
+    messages:
+      rbac_unknown_permission: "contains an unknown permission: %{key}"
+      rbac_wildcard_not_allowed: "may only use wildcard %{key} on a system role"
+      rbac_not_grantable: "includes permissions you do not have: %{keys}"
+      rbac_wrong_tenant: "belongs to a different tenant"
+      rbac_readonly: "cannot be changed once assigned"
+  activerecord:
+    models:
+      rbac_role:
+        one: "Role"
+        other: "Roles"
+  plutonium:
+    rbac:
+      role:
+        key_hint: "Leave blank to derive it from the name."
+      permissions:
+        all: "All permissions"
+        other: "Other"

@@ -404,3 +404,4 @@ The template is one class with every requested include, a `setup` that calls `lo
 - [[plutonium-tenancy]]: `relation_scope`, parent scoping, nested resources (matched by `NestedResource`)
 - [[plutonium-app]]: portal mounting and entity strategies that drive auth/scoping
 - [[plutonium-auth]]: Rodauth setup behind the default login flow
+- [[plutonium-rbac]]: `Plutonium::Testing::Rbac#with_rbac_permissions` for policy tests under RBAC

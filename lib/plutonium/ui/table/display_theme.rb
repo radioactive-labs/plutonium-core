@@ -39,6 +39,8 @@ module Plutonium
             rating: "flex items-center gap-0.5",
             rating_filled: "w-4 h-4 text-warning-500 fill-current",
             rating_empty: "w-4 h-4 text-[var(--pu-border)]",
+            rbac_permissions: "grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm text-[var(--pu-text)]",
+            rbac_permissions_group: "font-medium text-[var(--pu-text-muted)]",
             binary: "text-sm text-[var(--pu-text-muted)]",
             phlexi_render: :string,
             json: "whitespace-pre font-mono text-xs bg-[var(--pu-surface-alt)] border border-[var(--pu-border-muted)] rounded-[var(--pu-radius-sm)] p-2 overflow-x-auto",

@@ -58,6 +58,7 @@ module Plutonium
     initializer "plutonium.register_migrations" do
       Plutonium::Migrations.register(:wizards, Plutonium.root.join("db/migrate/wizard").to_s)
       Plutonium::Migrations.register(:async_interactions, Plutonium.root.join("db/migrate/async_interactions").to_s)
+      Plutonium::Migrations.register(:rbac, Plutonium.root.join("db/migrate/rbac").to_s)
     end
 
     # Runs after the host's config/initializers/plutonium.rb (load_config_initializers)
@@ -100,9 +101,16 @@ module Plutonium
       setup_phlexi_themes
     end
 
-    # rake_tasks do
-    #   load "tasks/create_rodauth_admin.rake"
-    # end
+    rake_tasks do
+      load Plutonium.root.join("lib/tasks/rbac.rake").to_s
+    end
+
+    # The RBAC catalog is derived from definition/policy classes, which reload
+    # in development.
+    config.to_prepare do
+      Plutonium::Rbac::Catalog.reset!
+      Plutonium::Rbac.reset_holder_policies!
+    end
 
     config.after_initialize do
       Plutonium::Reloader.start! if Plutonium.configuration.enable_hotreload

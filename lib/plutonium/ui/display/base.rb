@@ -95,6 +95,11 @@ module Plutonium
             create_component(Plutonium::UI::Display::Components::Rating, :rating, **, &)
           end
 
+          # Role permissions grouped by resource. See {Components::RbacPermissions}.
+          def rbac_permissions_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::RbacPermissions, :rbac_permissions, **, &)
+          end
+
           def binary_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Binary, :binary, **, &)
           end

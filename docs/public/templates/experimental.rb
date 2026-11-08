@@ -1,10 +1,12 @@
-# Plutonium's experimental subsystems: wizards and async interactions.
+# Plutonium's experimental subsystems: wizards, async interactions and RBAC.
 #
-# Both are off by default — their flags gate their MIGRATIONS as well as their
-# behaviour, so an app that has not opted in has neither table. This turns them
-# on and schedules the recurring jobs each one needs to stay healthy.
+# All are off by default: their flags gate their MIGRATIONS as well as their
+# behaviour, so an app that has not opted in has none of their tables. This turns
+# wizards and async interactions on and schedules the recurring jobs each one
+# needs to stay healthy. RBAC needs a holder model first, so it only prints the
+# command to run once the app has one.
 #
-# Kept out of plutonium.rb because it is the baseline install, and these two are
+# Kept out of plutonium.rb because it is the baseline install, and these are
 # marked experimental: their DSL and behaviour may change in a future release.
 # Opting a new app in is a choice, not a default.
 after_bundle do
@@ -25,6 +27,11 @@ after_bundle do
     git add: "."
     git commit: %( -m 'chore: enable async interactions') if `git status --porcelain`.present?
   end
+
+  # RBAC needs a holder model (usually the membership from pu:saas:setup), which
+  # a fresh app does not have yet, so it is not installed here.
+  say "Experimental RBAC: once you have a membership model, run " \
+      "`rails g pu:rbac:install --holders=<Membership>:<entity> --dest=<portal>`"
 
   # Both gate their migration paths on the flags just written, and this process
   # booted before either existed.

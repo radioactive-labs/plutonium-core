@@ -31,6 +31,7 @@ module Plutonium
       def self.method_added(name)
         super
 
+        check_rbac_holder_definition! if name == :rbac_holder
         return unless name == :relation_scope
 
         raise <<~MSG
@@ -44,6 +45,38 @@ module Plutonium
             end
         MSG
       end
+
+      # RBAC resolves the holder through ::ResourcePolicy (or a portal's
+      # <Portal>::ResourcePolicy module), never through the policy being
+      # checked, so a definition anywhere else would be silently ignored.
+      # Module definitions do not reach Class.method_added, so portal concerns
+      # pass on their own.
+      def self.check_rbac_holder_definition!
+        return if self == Plutonium::Resource::Policy || name == "ResourcePolicy"
+
+        raise <<~MSG
+          #{self} defines `rbac_holder`, which RBAC never calls on this class.
+          Plutonium resolves the holder through one place per portal:
+
+            # app/policies/resource_policy.rb, the default for every portal
+            class ResourcePolicy < Plutonium::Resource::Policy
+              def rbac_holder = ...
+            end
+
+            # packages/admin_portal/app/policies/admin_portal/resource_policy.rb, a portal override
+            module AdminPortal::ResourcePolicy
+              def rbac_holder = user
+            end
+
+          Move the method to one of those.
+        MSG
+      end
+      private_class_method :check_rbac_holder_definition!
+
+      # Who holds roles for `user` in `entity_scope`; nil means no permissions.
+      # Apps override this in ::ResourcePolicy (and optionally in a portal's
+      # <Portal>::ResourcePolicy module). Plutonium::Rbac.holder_for calls it.
+      def rbac_holder = nil
 
       # Wraps apply_scope to verify default_relation_scope was called.
       # This prevents accidental multi-tenancy leaks when overriding relation_scope.

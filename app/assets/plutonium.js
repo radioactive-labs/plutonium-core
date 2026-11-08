@@ -30201,6 +30201,41 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/rbac_permissions_controller.js
+  var rbac_permissions_controller_default = class extends Controller {
+    static targets = ["group", "groupToggle", "permission"];
+    connect() {
+      this.sync();
+    }
+    toggleGroup(event) {
+      const group = event.target.closest("[data-rbac-permissions-target='group']");
+      this.permissionsIn(group).forEach((box) => {
+        box.checked = event.target.checked;
+      });
+      this.sync();
+    }
+    toggleAction({ params: { permissionAction } }) {
+      const boxes = this.permissionTargets.filter((box) => box.dataset.permissionAction === permissionAction);
+      const check = !boxes.every((box) => box.checked);
+      boxes.forEach((box) => {
+        box.checked = check;
+      });
+      this.sync();
+    }
+    sync() {
+      this.groupTargets.forEach((group) => {
+        const boxes = this.permissionsIn(group);
+        const toggle = group.querySelector("[data-rbac-permissions-target='groupToggle']");
+        const checked = boxes.filter((box) => box.checked).length;
+        toggle.checked = boxes.length > 0 && checked === boxes.length;
+        toggle.indeterminate = checked > 0 && checked < boxes.length;
+      });
+    }
+    permissionsIn(group) {
+      return [...group.querySelectorAll("[data-rbac-permissions-target='permission']")];
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -30248,6 +30283,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("chart", chart_controller_default);
     application2.register("frame-refresh", frame_refresh_controller_default);
     application2.register("timeago", timeago_controller_default);
+    application2.register("rbac-permissions", rbac_permissions_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

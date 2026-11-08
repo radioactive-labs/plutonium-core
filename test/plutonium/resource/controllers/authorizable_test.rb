@@ -7,6 +7,7 @@ class Plutonium::Resource::Controllers::AuthorizableTest < ActiveSupport::TestCa
     # Stub Rails controller class methods needed by the modules
     def self.authorize(*, **) = nil
     def self.helper_method(*) = nil
+    def self.before_action(*, **) = nil
     def self.after_action(*, **) = nil
     def self.skip_after_action(*, **) = nil
     def self.attr_writer(*) = nil

@@ -15,6 +15,7 @@ Authorization for resources. Built on [ActionPolicy](https://actionpolicy.evilma
 - **For `has_cents` fields, use the virtual name** (`:price`), NEVER `:price_cents`.
 - **Don't put `*_attributes` hashes in `permitted_attributes_for_*`.** Nested forms are extracted from the form definition, not the policy. List the association name (`:variants`) and the `nested_input` in the definition handles the rest.
 - **Custom action ⇒ policy method.** `action :publish` needs `def publish?`. Undefined methods return `false` → action silently disappears.
+- **With [RBAC](/reference/rbac/) enabled, the mixin answers these.** A policy that includes `Plutonium::Rbac::Policy` gets `read?`, `create?`, `update?`, `destroy?`, `export_csv?` and every declared custom action from permission keys. A predicate you define in the class still wins, so delete constant ones. See [RBAC › Permissions](/reference/rbac/permissions#default-predicates).
 - **Index has no `record` instance.** On collection routes `record` is the resource class. Record-dependent `_for_read` overrides need an explicit `_for_index` too (see [below](#index-has-no-record)).
 
 ## Base class
@@ -87,6 +88,14 @@ def publish? = update? && record.draft?
 def archive? = create? && !record.archived?
 def invite_user? = user.admin?
 ```
+
+With RBAC, leave the method out: the mixin answers `publish?` from `blogging/post.publish`. To add record state, call `super`:
+
+```ruby
+def publish? = super && record.draft?
+```
+
+See [RBAC › Custom actions](/reference/rbac/permissions#custom-actions).
 
 ### Bulk actions: per-record authorization
 
@@ -434,4 +443,5 @@ policy.permitted_attributes_for_update
 - [Interactions](./interactions): custom actions whose policy methods you define
 - [Resource › Actions](/reference/resource/actions): registering actions that need policy methods
 - [Tenancy › Entity scoping](/reference/tenancy/entity-scoping): `default_relation_scope`, three model shapes, custom scopes
+- [RBAC](/reference/rbac/): permission-based roles that answer these predicates (experimental)
 - [ActionPolicy docs](https://actionpolicy.evilmartians.io/): the underlying library

@@ -78,6 +78,8 @@ module Plutonium
             rating: "flex items-center gap-0.5",
             rating_filled: "w-5 h-5 text-warning-500 fill-current",
             rating_empty: "w-5 h-5 text-[var(--pu-border)]",
+            rbac_permissions: "grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[var(--pu-text)]",
+            rbac_permissions_group: "font-medium text-[var(--pu-text-muted)]",
             binary: "text-sm text-[var(--pu-text-muted)]",
 
             # Attachments

@@ -11,7 +11,7 @@ For everything about the interaction itself (inputs, validation, outcomes, `exec
 
 ## 🚨 Critical (read first)
 
-- **Experimental.** The DSL and behavior may change in a future release, same status as [[plutonium-wizard]] and [[plutonium-kanban]]. Fine to build on; expect to revisit it on upgrade.
+- **Experimental.** The DSL and behavior may change in a future release, same status as [[plutonium-wizard]], [[plutonium-kanban]] and [[plutonium-rbac]]. Fine to build on; expect to revisit it on upgrade.
 - **Enable the subsystem first.** `rails g pu:async_interactions:install --dest=<portal>` flips `config.async_interactions.enabled = true`, schedules `ReapJob`, and connects the run resource to that portal; then `rails db:migrate`. Pass `--skip-portal` to enable it before any portal exists. Off by default, so no `plutonium_async_runs` table otherwise.
 - **`async` fully replaces `#execute`.** An interaction either executes inline or runs async; declaring both raises `ArgumentError` at load.
 - **Define `perform_on(record)` for targeted work, `perform` for opaque work.** A run class implementing neither fails loudly (naming the class) the first time it's performed, rather than a bare `NoMethodError`.

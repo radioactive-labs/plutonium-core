@@ -107,6 +107,14 @@ Only plain uploads are affected. A direct-upload field already arrives as a toke
 | `async_interactions.stall_after` | `1.hour` | How long a run may sit with no progress write before `ReapJob` treats it as stalled. See [Stalled runs and ReapJob](./behavior/async-interactions#stalled-runs-and-reapjob). |
 | `async_interactions.attachment_backend` | `nil` | See [Attachments](#attachments). |
 
+## RBAC
+
+Experimental. `enabled` gates the subsystem and its migration. Full detail in [RBAC › Configuration](./rbac/#configuration).
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `rbac.enabled` | `false` | Enable RBAC and its migration. Set by `pu:rbac:install`. |
+
 ## Development mode
 
 `config.development?` is driven by the `PLUTONIUM_DEV` environment variable, not by the initializer. It is for working **on the Plutonium gem**: it uses local `src/` assets, enables hot reloading, and shows more detailed errors. Applications leave it unset.
@@ -122,3 +130,4 @@ export PLUTONIUM_DEV=1
 - [Components › Avatar](./ui/components#avatar): `navii_host_url`
 - [Wizards › Storage & config](./wizard/storage-config): the `wizards.*` settings in context
 - [Async interactions](./behavior/async-interactions): the `async_interactions.*` settings in context
+- [RBAC](./rbac/): the `rbac.*` settings in context

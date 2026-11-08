@@ -290,6 +290,32 @@ end
 
 Generates one test per (role × portal). Allowed = `200 | 302`; blocked = `302 | 401 | 403 | 404`.
 
+### `Plutonium::Testing::Rbac`
+
+For apps using [RBAC](/reference/rbac/). `with_rbac_permissions(*keys) { ... }` runs the block as if the current holder had exactly those keys, whatever roles are stored.
+
+```ruby
+require "plutonium/testing"
+
+class Hr::EmployeePolicyTest < ActiveSupport::TestCase
+  include Plutonium::Testing::Rbac
+
+  test "promote needs its own permission" do
+    policy = Hr::EmployeePolicy.new(Hr::Employee.new, user: User.new, entity_scope: Organization.new)
+
+    with_rbac_permissions("hr/employee.update") { refute policy.promote? }
+    with_rbac_permissions("hr/employee.promote") { assert policy.promote? }
+  end
+end
+```
+
+The override lives in per-request state that Rails resets at the start of every request, so it has no effect in integration tests. There, create a real role and assign it:
+
+```ruby
+role = Plutonium::Rbac::Role.create!(name: "Reviewer", entity: org, permissions: ["hr/employee.read"])
+membership.update!(rbac_role_ids: [role.id])
+```
+
 ## Auth helpers
 
 `login_as` and friends come from `Plutonium::Testing::AuthHelpers`, which only some concerns pull in. The default portal comes from the DSL (`resource_tests_for`), which is a separate include:
@@ -378,4 +404,5 @@ Output path: `test/integration/<portal>_portal/<resource_underscored>_test.rb`.
 - [Resource › Definition](/reference/resource/definition): definition props the smoke test introspects
 - [Tenancy](/reference/tenancy/): parent scoping (`NestedResource`), entity strategies (drive auth/scoping)
 - [Auth](/reference/auth/): Rodauth setup behind the default `sign_in_for_tests`
+- [RBAC](/reference/rbac/): roles and permission keys behind `with_rbac_permissions`
 - [Guides › Testing](/guides/testing): task-oriented walkthrough

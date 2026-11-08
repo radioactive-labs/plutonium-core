@@ -1,4 +1,5 @@
 class OrganizationUser < ::ResourceRecord
+  include Plutonium::Rbac::Holder
   # add concerns above.
 
   # add constants above.
@@ -28,6 +29,8 @@ class OrganizationUser < ::ResourceRecord
   # add delegations above.
 
   # add misc attribute macros above.
+
+  def rbac_entity = organization
 
   # add methods above. add private methods below.
 end

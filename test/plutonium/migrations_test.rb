@@ -5,6 +5,9 @@ require "test_helper"
 module Plutonium
   class MigrationsTest < Minitest::Test
     def setup
+      # The registry is shared with the railtie's boot-time registrations; put
+      # it back afterwards so later tests (e.g. Rbac::ConfigurationTest) see it.
+      @registry = Plutonium::Migrations.instance_variable_get(:@registry).dup
       Plutonium::Migrations.reset!
       # RESTORE the original flag in teardown (don't hard-code false): the dummy app
       # enables wizards at boot, and leaving it false here would make any later test
@@ -13,7 +16,7 @@ module Plutonium
     end
 
     def teardown
-      Plutonium::Migrations.reset!
+      Plutonium::Migrations.instance_variable_set(:@registry, @registry)
       Plutonium.configuration.wizards.enabled = @was_enabled
     end
 

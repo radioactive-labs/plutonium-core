@@ -83,6 +83,11 @@ module Plutonium
             create_component(Components::Rating, :rating, **, &)
           end
 
+          # Permission grid for Plutonium::Rbac::Role. See {Components::RbacPermissions}.
+          def rbac_permissions_tag(**, &)
+            create_component(Components::RbacPermissions, :rbac_permissions, **, &)
+          end
+
           def flatpickr_tag(**, &)
             create_component(Components::Flatpickr, :flatpickr, **, &)
           end

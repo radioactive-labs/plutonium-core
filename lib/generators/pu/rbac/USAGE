@@ -1,0 +1,44 @@
+Description:
+    Enable experimental role-based access control. Turns on config.rbac,
+    writes config/initializers/rbac.rb (system roles), defines rbac_holder
+    on ResourcePolicy from --holders, includes Plutonium::Rbac::Holder in
+    each holder model and
+    Plutonium::Rbac::Policy in the base policy, and connects the role
+    resource to a portal.
+
+Usage:
+    rails g pu:rbac:install --holders=HOLDER [HOLDER...] [options]
+
+Options:
+    --holders=HOLDER...       Models that hold roles. Use Class:association for a
+                              membership scoped to a tenant (OrganizationUser:organization);
+                              it gets `def rbac_entity = association`. A bare
+                              class (User) holds roles outside any tenant.
+    --policy=CLASS            Policy class that receives Plutonium::Rbac::Policy
+                              (default: ResourcePolicy)
+    --user-association=NAME   Association from a membership holder to the user
+                              (default: user)
+    --dest=DESTINATION        Portal that gets the role resource (main_app or a portal package)
+    --skip-portal             Do not connect the role resource to a portal
+
+Examples:
+    # Memberships hold roles inside an organization, users outside it
+    rails g pu:rbac:install --holders=OrganizationUser:organization User --dest=org_portal
+
+    # Enable now, connect a portal later
+    rails g pu:rbac:install --holders=OrganizationUser:organization --skip-portal
+
+Generated Files:
+    config/initializers/rbac.rb
+    [packages/portal/]app/controllers/[portal/]rbac_roles_controller.rb
+
+What Gets Modified:
+    config/initializers/plutonium.rb   config.rbac.enabled = true
+    Holder models                      include Plutonium::Rbac::Holder
+    Policy class                       include Plutonium::Rbac::Policy
+    app/policies/resource_policy.rb    def rbac_holder (always this file)
+    Portal routes                      register_resource ::Plutonium::Rbac::Role
+
+After Generation:
+    1. rails db:migrate
+    2. rails plutonium:rbac:sync
