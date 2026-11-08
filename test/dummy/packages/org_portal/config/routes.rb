@@ -32,6 +32,8 @@ OrgPortal::Engine.routes.draw do
   # Registered in a `:path` entity-scoped portal too, so the tenant filter and
   # the entity-prefixed URL are exercised against a live route.
   register_resource ::Plutonium::Interaction::Async::Run
+  register_resource ::Hr::Employee
+  register_resource ::Plutonium::Rbac::Role
   # register resources above.
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

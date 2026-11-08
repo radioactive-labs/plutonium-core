@@ -74,6 +74,11 @@ aside: false
       { name: 'DSL', link: '/plutonium-core/reference/dashboard/dsl' },
       { name: 'Registration', link: '/plutonium-core/reference/dashboard/registration' },
     ]},
+    { group: 'RBAC', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/rbac/' },
+      { name: 'Permissions', link: '/plutonium-core/reference/rbac/permissions' },
+      { name: 'Roles', link: '/plutonium-core/reference/rbac/roles' },
+    ]},
     { group: 'Testing', items: [
       { name: 'Overview', link: '/plutonium-core/reference/testing/' },
     ]},

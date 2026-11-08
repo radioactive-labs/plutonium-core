@@ -397,4 +397,5 @@ Use Rack::Attack or similar to throttle:
 - [Entity scoping](./entity-scoping): how invites are filtered to the current entity
 - [Auth](/reference/auth/): Rodauth account configuration
 - [Behavior › Interactions](/reference/behavior/interactions): `cancel_invite_interaction`, `resend_invite_interaction`
+- [RBAC › Invites](/reference/rbac/roles#invites): giving an invite roles before the user signs up (experimental)
 - [Guides › User invites](/guides/user-invites): task-oriented walkthrough

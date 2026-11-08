@@ -1291,6 +1291,31 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   @apply rounded-sm outline-2 outline-offset-2 outline-primary-500;
 }
 
+/* RBAC permission grid (Plutonium::UI::Form::Components::RbacPermissions):
+   per-action toggles above a responsive grid of one card per resource. */
+.pu-rbac-permissions {
+  @apply flex flex-col gap-4;
+}
+.pu-rbac-permissions-actions {
+  @apply flex flex-wrap gap-2;
+}
+.pu-rbac-permissions-groups {
+  @apply grid gap-4 grid-cols-[repeat(auto-fill,minmax(14rem,1fr))];
+}
+.pu-rbac-permissions-group {
+  @apply flex flex-col gap-2 m-0 p-4 border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] bg-[var(--pu-surface)];
+}
+.pu-rbac-permissions-group legend {
+  @apply float-left w-full mb-1 pb-2 border-b border-[var(--pu-border-muted)] font-semibold text-[var(--pu-text)];
+}
+.pu-rbac-permissions-group legend label,
+.pu-rbac-permission {
+  @apply flex items-center gap-2 cursor-pointer;
+}
+.pu-rbac-permission {
+  @apply text-sm text-[var(--pu-text)];
+}
+
 /* Tailwind's preflight strips list markers. Restore them inside the rich
    text editors (Trix, Lexxy) so lists look like lists while editing. */
 trix-editor ul,

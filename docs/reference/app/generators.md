@@ -27,6 +27,7 @@ Plutonium's `pu:*` CLI generators. Discoverable via `rails g pu:<tab>`. Always p
 | [`pu:profile:conn`](#pu-profile-conn) | Connect profile to a portal as a singular resource |
 | [`pu:invites:install`](#pu-invites-install) | User invitations package |
 | [`pu:invites:invitable`](#pu-invites-invitable) | Mark a model as invitable |
+| [`pu:rbac:install`](#pu-rbac-install) | Experimental: permission-based roles (RBAC) |
 | [`pu:eject:layout`](#pu-eject-layout) | Eject base layout for customization |
 | [`pu:eject:shell`](#pu-eject-shell) | Eject topbar/sidebar partials |
 | [`pu:test:install`](#pu-test-install) | Install `Plutonium::Testing` scaffolding |
@@ -329,6 +330,33 @@ rails g pu:invites:invitable Tenant --dest=my_package
 | `--membership-model=NAME` | `EntityUser` | Membership join model |
 | `--dest=PACKAGE` | `main_app` | Destination package |
 | `--[no-]email-templates` | `true` | Generate custom email templates |
+
+---
+
+## RBAC generators
+
+::: warning Experimental
+RBAC is experimental. See [Guides › Roles & permissions](/guides/rbac) for the full system.
+:::
+
+### `pu:rbac:install`
+
+Enables RBAC, writes `config/initializers/rbac.rb` (system roles), defines `rbac_holder` on `ResourcePolicy` from `--holders` (always `app/policies/resource_policy.rb`, even when `--policy` names another class), includes `Plutonium::Rbac::Holder` in each holder model and `Plutonium::Rbac::Policy` in the base policy, and connects the role resource to a portal.
+
+```bash
+rails g pu:rbac:install --holders=OrganizationUser:organization User --dest=org_portal
+rails g pu:rbac:install --holders=OrganizationUser:organization --skip-portal
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--holders=HOLDER...` | (required) | Models that hold roles. `Class:association` for a membership scoped to a tenant (gets `def rbac_entity = association`); a bare class is the user itself, outside a tenant for the membership's user class (`User`), everywhere for any other (`Admin`) |
+| `--policy=CLASS` | `ResourcePolicy` | Policy class that receives `Plutonium::Rbac::Policy` |
+| `--user-association=NAME` | `user` | Association from a membership holder to the user |
+| `--dest=PORTAL` | prompt | Portal that gets the role resource (`main_app` or a portal package) |
+| `--skip-portal` | `false` | Do not connect the role resource to a portal |
+
+Afterwards, run `rails db:migrate` then `rails plutonium:rbac:sync`, and remove hand-written `create?`/`read?` overrides (including the ones `pu:core:install` puts in `ResourcePolicy`) from policies that should use permissions.
 
 ---
 

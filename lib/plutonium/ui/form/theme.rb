@@ -130,6 +130,9 @@ module Plutonium
             # Star picker: styled by .pu-rating (components.css).
             rating: "",
 
+            # Permission grid: styled by .pu-rbac-permissions (components.css).
+            rbac_permissions: "",
+
             # Key/value editor: the component lays out its own rows and inputs.
             key_value_store: "",
 

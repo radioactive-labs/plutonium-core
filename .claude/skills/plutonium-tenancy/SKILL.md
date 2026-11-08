@@ -791,10 +791,17 @@ Invites are entity-scoped automatically: `Invites::UserInvite belongs_to :entity
 
 ---
 
+# Part 4: Tenant roles (RBAC, experimental)
+
+With `pu:rbac:install --holders=OrganizationUser:organization ...`, the membership holds roles per tenant (`def rbac_entity = organization`), and each tenant builds its own roles in the portal where `::Plutonium::Rbac::Role` is registered. `ResourcePolicy#rbac_holder` decides which record holds roles; for unscoped portals branch inside it or override it in the portal's `<Portal>::ResourcePolicy` module, since a `nil` holder denies everything. `rbac_holder`, role resource, assignment, escalation guard and invites with roles: [[plutonium-rbac]].
+
+---
+
 ## Related skills
 
 - [[plutonium-resource]]: model declarations (`belongs_to`, `has_one :through`, custom scopes), `permitted_associations` for show-page tabs.
 - [[plutonium-behavior]]: `relation_scope` syntax, policy authorization context, controller presentation hooks.
 - [[plutonium-app]]: portal setup, `scope_to_entity`, mounting engines.
 - [[plutonium-auth]]: Rodauth signup flow for invite acceptance.
+- [[plutonium-rbac]]: tenant roles and permissions (experimental)
 - [[plutonium-testing]]: integration tests for scoped portals, `login_as` via `Plutonium::Testing::AuthHelpers`.

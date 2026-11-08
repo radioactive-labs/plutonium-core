@@ -11,7 +11,7 @@ For resources and their definitions see [[plutonium-resource]]; for portals and 
 
 ## 🚨 Critical (read first)
 
-- **Experimental.** The DSL and behavior may change in a future release, the same status as [[plutonium-wizard]], [[plutonium-kanban]] and [[plutonium-async-interactions]]. Fine to build on; expect to follow the changelog.
+- **Experimental.** The DSL and behavior may change in a future release, the same status as [[plutonium-wizard]], [[plutonium-kanban]], [[plutonium-async-interactions]] and [[plutonium-rbac]]. Fine to build on; expect to follow the changelog.
 - **Generate, don't hand-write:** `rails g pu:dashboard Sales --dest=admin_portal` writes the class AND the `register_dashboard` line.
 - **Replacing the portal's default page:** `rails g pu:dashboard Home --dest=admin_portal --at=/` mounts it at the portal root and replaces the generated `root to: "dashboard#index"` line (two roots clash). It does NOT delete the generated `DashboardController` + `dashboard/index.html.erb`; delete them, nothing routes there any more. The sidebar Home link then opens the dashboard, and it is left out of the Dashboards group.
 - **Dashboards live in `app/dashboards/`** (`packages/<portal>/app/dashboards/<portal>/` in a package). Class name ends in `Dashboard`; the label drops the suffix.

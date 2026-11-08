@@ -12,9 +12,21 @@ module Plutonium
           authorize :entity_scope, through: :entity_scope_for_authorize
 
           helper_method :policy_for, :authorized_resource_scope
+
+          before_action :install_rbac_actor_resolver, if: -> { Plutonium.configuration.rbac.enabled }
         end
 
         private
+
+        # The escalation guard (Plutonium::Rbac.ungrantable_keys) checks role
+        # grants against the acting holder. Lazy: entity_scope resolves after
+        # this callback runs. The portal picks its rbac_holder override, if any.
+        def install_rbac_actor_resolver
+          Plutonium::Rbac::Current.portal = Plutonium::Rbac.portal_for(current_engine)
+          Plutonium::Rbac::Current.actor_resolver = -> {
+            Plutonium::Rbac::Current.holder_for(user: current_user, entity_scope: entity_scope_for_authorize)
+          }
+        end
 
         # Use this when getting a scope for a resource that is not the current
         # Use this instead of authorized_scope directly

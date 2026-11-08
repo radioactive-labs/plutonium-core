@@ -19,6 +19,7 @@ aside: false
       { name: 'Authorization', link: '/plutonium-core/guides/authorization' },
       { name: 'User profile', link: '/plutonium-core/guides/user-profile' },
       { name: 'User invites', link: '/plutonium-core/guides/user-invites' },
+      { name: 'Roles & permissions', desc: 'Experimental RBAC: code-derived permissions, tenant roles, restricted fields.', link: '/plutonium-core/guides/rbac' },
     ]},
     { group: 'Features', items: [
       { name: 'Custom actions', link: '/plutonium-core/guides/custom-actions' },

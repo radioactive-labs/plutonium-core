@@ -44,6 +44,7 @@ import RunProgressController from "./run_progress_controller.js"
 import ChartController from "./chart_controller.js"
 import FrameRefreshController from "./frame_refresh_controller.js"
 import TimeagoController from "./timeago_controller.js"
+import RbacPermissionsController from "./rbac_permissions_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -92,4 +93,5 @@ export default function (application) {
   application.register("chart", ChartController)
   application.register("frame-refresh", FrameRefreshController)
   application.register("timeago", TimeagoController)
+  application.register("rbac-permissions", RbacPermissionsController)
 }

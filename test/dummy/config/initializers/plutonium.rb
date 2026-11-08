@@ -9,5 +9,8 @@ Plutonium.configure do |config|
   # Enable async interactions so the runs migration runs in the test DB.
   config.async_interactions.enabled = true
 
+  # Enable experimental RBAC so its migration runs in the test DB.
+  config.rbac.enabled = true
+
   # Configure plutonium above.
 end

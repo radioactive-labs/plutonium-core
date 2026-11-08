@@ -40,6 +40,10 @@ module Plutonium
     #   runs configuration — gates the runs subsystem and its migrations
     attr_reader :async_interactions
 
+    # @return [Plutonium::Rbac::Configuration] experimental RBAC configuration —
+    #   gates the subsystem and its migration
+    attr_reader :rbac
+
     # @return [Float] the current defaults version
     attr_reader :defaults_version
 
@@ -164,6 +168,7 @@ module Plutonium
       @assets = AssetConfiguration.new
       @wizards = Plutonium::Wizard::Configuration.new
       @async_interactions = Plutonium::Interaction::Async::Configuration.new
+      @rbac = Plutonium::Rbac::Configuration.new
 
       @development = parse_boolean_env("PLUTONIUM_DEV")
       @cache_discovery = !Rails.env.development?

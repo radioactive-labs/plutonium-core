@@ -100,6 +100,7 @@ module Plutonium
           # verify_resolvable! is what loads both subjects, so the clock starts
           # once they are known good — not before.
           @subjects_read_at = Time.current
+          install_rbac_actor_resolver if Plutonium.configuration.rbac.enabled
         end
 
         # @return [ActiveRecord::Base] the user the run authorizes as
@@ -323,6 +324,24 @@ module Plutonium
         end
 
         private
+
+        # The RBAC escalation guard checks role grants against the acting
+        # holder, as Core::Controllers::Authorizable does for a request. Reads
+        # the subjects lazily, so a refresh_subjects! is honoured. The portal
+        # comes from the stored namespace (OrgPortal::Hr belongs to OrgPortal).
+        def install_rbac_actor_resolver
+          Plutonium::Rbac::Current.portal = rbac_portal
+          Plutonium::Rbac::Current.actor_resolver = -> {
+            Plutonium::Rbac::Current.holder_for(user: initiator, entity_scope: scoped_entity)
+          }
+        end
+
+        def rbac_portal
+          return unless authorization_namespace
+
+          engine = "#{authorization_namespace.name.split("::").first}::Engine".safe_constantize
+          Plutonium::Rbac.portal_for(engine) if engine
+        end
 
         # Constantizes a stored class/module name, converting the raw NameError
         # into this class's domain error. A model or module renamed between

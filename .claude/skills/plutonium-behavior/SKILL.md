@@ -21,7 +21,7 @@ For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]
 - **Redirect is automatic on success**: only use `with_redirect_response` for a *different* destination.
 - **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly. `super` works when extending a parent policy (e.g., a package base) that itself calls it. See [[plutonium-tenancy]].
 - **For `has_cents` fields, use the virtual name (`:price`), not `:price_cents`** in `permitted_attributes_for_*`.
-- **Custom action ⇒ policy method.** `action :publish` needs `def publish?` on the policy (undefined methods return `false`).
+- **Custom action ⇒ policy method.** `action :publish` needs `def publish?` on the policy (undefined methods return `false`). Under RBAC the mixin supplies it; see [[plutonium-rbac]].
 - **Named custom routes.** When adding custom routes, always pass `as:` so `resource_url_for` can build URLs.
 
 ---
@@ -697,6 +697,10 @@ def permitted_attributes_for_create
 end
 ```
 
+## RBAC (experimental)
+
+If the app ran `pu:rbac:install`, policies that include `Plutonium::Rbac::Policy` (check with `grep -rn "Plutonium::Rbac::Policy" app packages`) answer the core predicates and every declared custom action from permission keys, so you don't write those methods. Add record state with `def publish? = super && record.draft?` (not `update? && ...`), and delete hand-written constant `create?`/`read?`, which beat the mixin. Everything else: [[plutonium-rbac]].
+
 ---
 
 # Part 3: Interactions
@@ -1037,3 +1041,4 @@ end
 - [[plutonium-tenancy]]: `relation_scope`, entity scoping, nested resources
 - [[plutonium-ui]]: custom interaction form templates, page classes
 - [[plutonium-testing]]: testing controllers, policies, interactions
+- [[plutonium-rbac]]: permission-based roles (experimental) that replace hand-written predicates

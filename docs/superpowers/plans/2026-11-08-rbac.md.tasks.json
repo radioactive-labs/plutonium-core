@@ -1,0 +1,126 @@
+{
+  "planPath": "docs/superpowers/plans/2026-11-08-rbac.md",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 0: Configuration, migration, and models skeleton",
+      "status": "completed",
+      "description": "**Goal:** `config.rbac` exists, the migration is registered behind the flag, and the two tables exist in the test DB.\n\n**Acceptance Criteria:**\n- [ ] `Plutonium.configuration.rbac.enabled` defaults to false.\n- [ ] `Plutonium::Migrations.enabled_paths` includes `db/migrate/rbac` only when enabled.\n- [ ] Test DB has `plutonium_rbac_roles` and `plutonium_rbac_role_assignments`.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/configuration_test.rb` \u2192 all pass\n\nSee plan section 'Task 0: Configuration, migration, and models skeleton'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac.rb\", \"lib/plutonium/rbac/configuration.rb\", \"db/migrate/rbac/20261108000001_create_plutonium_rbac_tables.rb\", \"lib/plutonium/configuration.rb\", \"lib/plutonium/railtie.rb\", \"test/dummy/config/initializers/plutonium.rb\", \"test/plutonium/rbac/configuration_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/configuration_test.rb\", \"acceptanceCriteria\": [\"config.rbac defaults disabled\", \"migration path registered behind flag\", \"tables exist in test DB\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: Permission, Matcher, registries, Catalog",
+      "status": "completed",
+      "description": "**Goal:** A catalog of every permission key, built from definitions (standard + custom actions), restricted fields, and hand-declared permissions, plus wildcard-aware matching.\n\n**Acceptance Criteria:**\n- [ ] `Matcher.grants?` handles exact, `*`, and `<resource>.*`, and treats wildcard keys being granted as requiring an equal-or-broader wildcard.\n- [ ] Catalog has `blogging/post.{read,create,update,destroy,export}` and `blogging/post.publish` / `.archive` (custom actions from `Blogging::PostDefinition`), and excludes `blogging/post.new/show/edit`.\n- [ ] Declared permissions (`Rbac.permission \"reports.view\"`) appear.\n- [ ] `custom_actions_for(Blogging::Post)` includes `:publish`.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/catalog_test.rb test/plutonium/rbac/matcher_test.rb` (run each file separately if the runner takes one) \u2192 pass\n\nSee plan section 'Task 1: Permission, Matcher, registries, Catalog'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac/permission.rb\", \"lib/plutonium/rbac/matcher.rb\", \"lib/plutonium/rbac/catalog.rb\", \"lib/plutonium/rbac/policy.rb\", \"lib/plutonium/rbac.rb\", \"lib/plutonium/railtie.rb\", \"test/plutonium/rbac/matcher_test.rb\", \"test/plutonium/rbac/catalog_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/catalog_test.rb\", \"acceptanceCriteria\": [\"wildcard matching\", \"standard + custom action permissions\", \"declared permissions\", \"custom_actions_for\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        0
+      ]
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Current, Role, RoleAssignment, escalation guard",
+      "status": "completed",
+      "description": "**Goal:** Persisted roles and assignments with key validation, tenant matching, and the \"can't grant what you don't have\" guard.\n\n**Acceptance Criteria:**\n- [ ] Unknown keys are rejected; wildcards are rejected unless `system_role`.\n- [ ] `key` defaults from `name` and is unique per entity (including the global `nil` entity).\n- [ ] With an actor resolver set, a role/assignment granting keys the actor lacks is invalid; a nil actor fails closed; no resolver (console/seeds) skips the guard.\n- [ ] A tenant role cannot be assigned to a holder whose `rbac_entity` differs.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/role_test.rb` and `.../role_assignment_test.rb` \u2192 pass\n\nSee plan section 'Task 2: Current, Role, RoleAssignment, escalation guard'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac/current.rb\", \"lib/plutonium/rbac/role.rb\", \"lib/plutonium/rbac/role_assignment.rb\", \"lib/plutonium/rbac.rb\", \"config/locales/en/rbac.yml\", \"test/plutonium/rbac/role_test.rb\", \"test/plutonium/rbac/role_assignment_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/role_test.rb\", \"acceptanceCriteria\": [\"key validation + wildcard rule\", \"key uniqueness per entity\", \"escalation guard fail-closed\", \"tenant match\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Holder concern",
+      "status": "completed",
+      "description": "**Goal:** Any model can hold roles, with cached permission keys and a form-friendly `rbac_role_ids` that validates and saves with the holder.\n\n**Acceptance Criteria:**\n- [ ] `rbac_permission_keys` is the union of all roles' keys; one query per request (cache hit on repeat).\n- [ ] `rbac_granted?` respects wildcards.\n- [ ] `rbac_role_ids=` stages; invalid staged roles add errors on `:rbac_roles` and the save fails without touching assignments; a valid save adds/removes assignments and invalidates the cache.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/holder_test.rb` and `.../role_assignment_test.rb` \u2192 pass\n\nSee plan section 'Task 3: Holder concern'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac/holder.rb\", \"test/plutonium/rbac/holder_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/holder_test.rb\", \"acceptanceCriteria\": [\"union of keys\", \"per-request cache\", \"staged role ids validate + sync\", \"blank ids ignored\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        2
+      ]
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Policy mixin (predicates and custom actions)",
+      "status": "completed",
+      "description": "**Goal:** `include Plutonium::Rbac::Policy` makes the core predicates and custom-action rules permission-backed, without breaking delegation or `send_with_report`.\n\n**Acceptance Criteria:**\n- [ ] `read?/create?/update?/destroy?/export_csv?` check `<resource>.<read|create|update|destroy|export>`.\n- [ ] `index?/show?/new?/edit?/kanban_move?` still delegate (e.g. `edit?` follows `update?`).\n- [ ] `publish?` resolves via `respond_to?` and checks `blogging/post.publish`; an explicit `publish?` that calls `super` combines both checks.\n- [ ] `send_with_report(:nonexistent?)` still raises `NotImplementedError`.\n- [ ] `granted?(\"reports.view\")` works for hand-declared keys.\n- [ ] No holder (resolver returns nil) denies everything.\n- [ ] `Rbac::Policy.resource_class_for(Blogging::PostPolicy)` is `Blogging::Post`; for `OrgPortal::Blogging::PostPolicy` it is also `Blogging::Post`.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/policy_test.rb` \u2192 pass\n\nSee plan section 'Task 4: Policy mixin (predicates and custom actions)'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac/policy.rb\", \"test/plutonium/rbac/policy_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/policy_test.rb\", \"acceptanceCriteria\": [\"core predicates map to keys\", \"delegation intact\", \"custom actions via respond_to\", \"unknown predicate raises\", \"nil holder denies\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Field-level permissions",
+      "status": "completed",
+      "description": "**Goal:** `rbac_restricted_attributes` hides ungranted fields from every `permitted_attributes_for_*`, including subclass overrides.\n\n**Acceptance Criteria:**\n- [ ] Without `.salary.read`, `salary` is missing from read/index/show/export lists; with it, present.\n- [ ] Without `.salary.write`, `salary` is missing from create/update/new/edit lists.\n- [ ] A subclass that overrides `permitted_attributes_for_index` directly is still filtered.\n- [ ] Restricted fields appear in the catalog as `<resource>.salary.read` / `.write`.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/policy_attribute_filter_test.rb` \u2192 pass\n\nSee plan section 'Task 5: Field-level permissions'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac/policy/attribute_filter.rb\", \"lib/plutonium/rbac/policy.rb\", \"test/plutonium/rbac/policy_attribute_filter_test.rb\", \"test/plutonium/rbac/catalog_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/policy_attribute_filter_test.rb\", \"acceptanceCriteria\": [\"read side filtered\", \"write side filtered\", \"subclass overrides filtered\", \"field keys in catalog\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        4
+      ]
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Controller wiring (actor) and system-role sync",
+      "status": "completed",
+      "description": "**Goal:** Requests set the escalation-guard actor automatically; `rake plutonium:rbac:sync` upserts code-declared system roles.\n\n**Acceptance Criteria:**\n- [ ] With RBAC enabled, a request through any Plutonium controller has `Rbac::Current.actor_resolver` set, resolving to `Rbac.holder_for(user: current_user, entity_scope:)`.\n- [ ] With RBAC disabled, nothing is set.\n- [ ] Sync creates `system_role: true` global roles, updates them on re-run, never duplicates.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/sync_test.rb` \u2192 pass\n\nSee plan section 'Task 6: Controller wiring (actor) and system-role sync'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/core/controllers/authorizable.rb\", \"lib/plutonium/railtie.rb\", \"lib/plutonium/rbac/sync.rb\", \"lib/tasks/rbac.rake\", \"test/plutonium/rbac/sync_test.rb\", \"test/plutonium/rbac/controller_actor_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/sync_test.rb\", \"acceptanceCriteria\": [\"actor resolver installed when enabled\", \"sync idempotent\", \"rake task listed\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        2
+      ]
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Role resource (definition, policy, permission grid UI)",
+      "status": "completed",
+      "description": "**Goal:** `register_resource ::Plutonium::Rbac::Role` gives a working, RBAC-gated management UI with a grouped permission picker.\n\n**Acceptance Criteria:**\n- [ ] Role policy scope: global roles + current tenant's roles in a tenant portal; only global roles outside one; never another tenant's.\n- [ ] `update?/destroy?` false for system roles and for roles from another scope (e.g. a global role seen from a tenant portal).\n- [ ] The form renders one checkbox per catalog key, named `<param>[permissions][]`, with a blank hidden input, grouped by resource, checked state reflecting the record.\n- [ ] The Stimulus controller is registered as `rbac-permissions`; group and per-action toggles work.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/role_policy_test.rb` and the component test \u2192 pass; `yarn build` succeeds.\n\nSee plan section 'Task 7: Role resource (definition, policy, permission grid UI)'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac/role_definition.rb\", \"lib/plutonium/rbac/role_policy.rb\", \"lib/plutonium/ui/form/components/rbac_permissions.rb\", \"lib/plutonium/ui/display/components/rbac_permissions.rb\", \"lib/plutonium/ui/form/base.rb\", \"lib/plutonium/ui/display/base.rb\", \"src/js/controllers/rbac_permissions_controller.js\", \"src/js/controllers/register_controllers.js\", \"test/plutonium/rbac/role_policy_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/role_policy_test.rb && yarn build\", \"acceptanceCriteria\": [\"tenant scoping of roles\", \"system/other-scope roles read-only\", \"grid renders catalog keys\", \"stimulus controller registered\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Invite integration",
+      "status": "completed",
+      "description": "**Goal:** Roles chosen at invite time attach to the pending invite and move to the membership on acceptance, atomically.\n\n**Acceptance Criteria:**\n- [ ] An invite model including `Plutonium::Rbac::Invite` is a holder (`rbac_role_ids=` works, escalation guard applies).\n- [ ] `accept_for_user!` moves the invite's assignments to the membership `create_membership_for` returns; the invite has none afterwards.\n- [ ] If membership creation raises, assignments stay on the invite (transaction rolls back).\n- [ ] `Plutonium::Rbac::InviteUser` adds a `rbac_role_ids` attribute and passes it through `additional_invite_attributes`.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/invite_test.rb` \u2192 pass\n\nSee plan section 'Task 8: Invite integration'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/rbac/invite.rb\", \"lib/plutonium/rbac/invite_user.rb\", \"test/plutonium/rbac/invite_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/rbac/invite_test.rb\", \"acceptanceCriteria\": [\"invite is a holder\", \"assignments transfer on accept\", \"rollback keeps assignments\", \"InviteUser passes rbac_role_ids\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        3
+      ]
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Testing helper",
+      "status": "completed",
+      "description": "**Goal:** Consumers can test RBAC policies without seeding roles.\n\n**Acceptance Criteria:**\n- [ ] `with_rbac_permissions(\"a.read\") { ... }` makes policies see exactly those keys, then restores the previous state even on exception.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/testing/rbac_test.rb` \u2192 pass\n\nSee plan section 'Task 9: Testing helper'.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/testing/rbac.rb\", \"lib/plutonium/testing.rb\", \"test/plutonium/testing/rbac_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/testing/rbac_test.rb\", \"acceptanceCriteria\": [\"override applied\", \"restored on exception\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        2
+      ]
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: `pu:rbac:install` generator",
+      "status": "completed",
+      "description": "**Goal:** One command enables RBAC, wires holders and the policy, writes the initializer, and connects the Role resource to a portal.\n\n**Acceptance Criteria:**\n- [ ] `config.rbac.enabled = true` lands in `config/initializers/plutonium.rb`.\n- [ ] `config/initializers/rbac.rb` has a holder resolver built from `--holders` and stub `owner`/`member` system roles.\n- [ ] Each holder model gets `include Plutonium::Rbac::Holder`; `Class:assoc` holders also get `def rbac_entity = assoc`.\n- [ ] The `--policy` class file gets `include Plutonium::Rbac::Policy`.\n- [ ] With `--dest=<portal>`: a `RbacRolesController` (`controller_for ::Plutonium::Rbac::Role`, entity merged into params) and `register_resource ::Plutonium::Rbac::Role` in routes. `--skip-portal` skips both.\n- [ ] It logs reminders to run `db:migrate` and `plutonium:rbac:sync`.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/generators/rbac_install_generator_test.rb` \u2192 pass (stage `test/dummy` changes first, see Ground rules)\n\nSee plan section 'Task 10: `pu:rbac:install` generator'.\n\n```json:metadata\n{\"files\": [\"lib/generators/pu/rbac/install_generator.rb\", \"lib/generators/pu/rbac/USAGE\", \"lib/generators/pu/rbac/templates/config/initializers/rbac.rb.tt\", \"lib/generators/pu/rbac/templates/app/controllers/rbac_roles_controller.rb.tt\", \"test/generators/rbac_install_generator_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/generators/rbac_install_generator_test.rb\", \"acceptanceCriteria\": [\"flag set\", \"initializer with resolver + system roles\", \"holders and policy wired\", \"portal controller + route\", \"reminders logged\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        6,
+        7
+      ]
+    },
+    {
+      "id": 11,
+      "subject": "Task 11: Dummy app integration (generators-first)",
+      "status": "completed",
+      "description": "**Goal:** Exercise RBAC end to end in `org_portal` with a new `hr` package: custom tenant role can run a custom action but not destroy, and a restricted field is hidden.\n\n**Acceptance Criteria:**\n- [ ] Only `Hr::*` policies use RBAC (`--policy=Hr::ResourcePolicy`); the existing dummy suite is unaffected.\n- [ ] Request test: a member with a tenant role granting `hr/employee.read` + `hr/employee.promote` sees the index, can run `promote`, gets denied on destroy, and doesn't see `salary`. Adding `hr/employee.salary.read` shows it.\n- [ ] A member can create a tenant role in `/org/:id/rbac_roles` with the permission grid (form posts `permissions[]`); the role saves with the current org as entity.\n- [ ] Escalation: that member cannot create a role containing a key they lack (422 / form error).\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/integration/rbac/org_portal_rbac_test.rb` \u2192 pass; then the full `bundle exec appraisal rails-8.1 rake test` \u2192 no new failures\n\nSee plan section 'Task 11: Dummy app integration (generators-first)'.\n\n```json:metadata\n{\"files\": [\"test/dummy/packages/hr\", \"test/dummy/packages/org_portal\", \"test/dummy/config/initializers/rbac.rb\", \"test/dummy/app/models/organization_user.rb\", \"test/integration/rbac/org_portal_rbac_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/rbac/org_portal_rbac_test.rb\", \"acceptanceCriteria\": [\"only Hr policies use RBAC\", \"custom action allowed, destroy denied\", \"restricted field hidden/shown\", \"tenant role creation via grid\", \"escalation blocked\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        5,
+        7,
+        8,
+        10
+      ]
+    },
+    {
+      "id": 12,
+      "subject": "Task 12: Docs, skills, experimental template",
+      "status": "completed",
+      "description": "**Goal:** Document RBAC for developers and AI assistants, and offer it in the experimental app template.\n\n**Acceptance Criteria:**\n- [ ] Guide opens with `::: warning Experimental`, covers: enabling and installing, key format, default predicates table, custom actions and `super`, restricted fields, system roles and sync, tenant roles and the escalation guard, invites, testing helper, non-goals.\n- [ ] Every code sample is checked against the implementation (CLAUDE.md \"Verify every code sample\"). Run at least: `cd test/dummy && RAILS_ENV=test bin/rails runner 'p Plutonium::Rbac::Catalog.keys.grep(/hr\\//)'` via the appraisal env and paste real keys.\n- [ ] No em dashes; voice rules followed.\n- [ ] `experimental.rb` mentions RBAC as needing holders, so it prints the command to run rather than running it (a fresh app has no membership model yet).\n- [ ] `yarn docs:build` passes.\n\n**Verify:** `yarn docs:build` \u2192 success; `grep -n \"\u2014\" docs/guides/rbac.md` \u2192 no output\n\nSee plan section 'Task 12: Docs, skills, experimental template'.\n\n```json:metadata\n{\"files\": [\"docs/guides/rbac.md\", \"docs/guides/index.md\", \"docs/public/templates/experimental.rb\", \".claude/skills/plutonium-behavior/SKILL.md\", \".claude/skills/plutonium-tenancy/SKILL.md\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"guide complete with experimental banner\", \"samples verified at runtime\", \"no em dashes\", \"template mentions rbac\", \"docs build passes\"], \"requiresUserVerification\": false}\n```",
+      "blockedBy": [
+        11
+      ]
+    }
+  ],
+  "lastUpdated": "2026-11-08T01:44:23.914419"
+}

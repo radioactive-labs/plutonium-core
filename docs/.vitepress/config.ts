@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const base = "/plutonium-core/"
-// Origin + base, with no trailing slash — content-loader URLs already start with one.
+// Origin + base, with no trailing slash: content-loader URLs already start with one.
 const hostname = "https://radioactive-labs.github.io/plutonium-core"
 
 // Whether the blog has anything a reader could actually open: a post that is not
@@ -80,7 +80,7 @@ export default defineConfig(withMermaid({
     plugins: [
       // Generates llms.txt, llms-full.txt, and a raw .md twin for every page.
       llmstxt({
-        // Site base (/plutonium-core/) is appended automatically — domain must not include it.
+        // Site base (/plutonium-core/) is appended automatically, so the domain must not include it.
         domain: "https://radioactive-labs.github.io",
         // public/ is served verbatim (skills live there); superpowers/ is internal.
         // Section landing pages are Vue components with no markdown content.
@@ -154,6 +154,7 @@ export default defineConfig(withMermaid({
           items: [
             { text: "Authentication", link: "/guides/authentication" },
             { text: "Authorization", link: "/guides/authorization" },
+            { text: "Roles & Permissions", link: "/guides/rbac" },
           ]
         },
         {
@@ -290,6 +291,15 @@ export default defineConfig(withMermaid({
             { text: "Overview", link: "/reference/dashboard/" },
             { text: "DSL", link: "/reference/dashboard/dsl" },
             { text: "Registration", link: "/reference/dashboard/registration" },
+          ]
+        },
+        {
+          text: "RBAC",
+          collapsed: false,
+          items: [
+            { text: "Overview", link: "/reference/rbac/" },
+            { text: "Permissions", link: "/reference/rbac/permissions" },
+            { text: "Roles", link: "/reference/rbac/roles" },
           ]
         },
         {

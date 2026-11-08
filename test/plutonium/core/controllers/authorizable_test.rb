@@ -7,6 +7,7 @@ class Plutonium::Core::Controllers::AuthorizableTest < ActiveSupport::TestCase
     # Stub Rails controller class methods needed by the module
     def self.authorize(*, **) = nil
     def self.helper_method(*) = nil
+    def self.before_action(*, **) = nil
 
     include Plutonium::Core::Controllers::Authorizable
 
@@ -190,6 +191,7 @@ class Plutonium::Core::Controllers::AuthorizableTest < ActiveSupport::TestCase
   # is built for real.
   class ContextTestController
     def self.helper_method(*) = nil
+    def self.before_action(*, **) = nil
 
     include Plutonium::Core::Controllers::Authorizable
 
